@@ -360,11 +360,14 @@ impl Cpu6502 {
     pub fn tick(&mut self) -> u8 {
         let fetch = self.ram[self.registers.pc as usize] as usize;
         let opcode = &OPCODES[fetch];
-        let operands = [
-            self.ram[self.registers.pc as usize + 1],
-            self.ram[self.registers.pc as usize + 2]
-        ];
-        self.registers.pc += opcode.bytes as u16;
+
+        // Find more Rusty way to handle this...
+        let mut operands = [0, 0];
+        for i in 0..opcode.bytes - 1 {
+            operands[i as usize] = self.ram[(self.registers.pc.wrapping_add(1 + i as u16)) as usize];
+        }
+        
+        self.registers.pc = self.registers.pc.wrapping_add(opcode.bytes as u16);
         (opcode.instr)(self, opcode, &operands)
     }
 }
@@ -388,80 +391,120 @@ enum AddrMode {
 pub mod instructions {
     use super::*;
 
-    fn get_abs(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
-        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
-        (addr, cpu.ram[addr])
+    // For easy handling of different address modes
+    // This does not seem Rusty at all so need to find better way to avoid casting and wraps everywhere
+    fn get_mem(cpu: &Cpu6502, mode: &AddrMode, operands: &[u8]) -> (usize, u8, u8) {
+        match mode {
+            AddrMode::ABS0 => {
+                let addr = (operands[1] as usize) << 8 | operands[0] as usize;
+                (addr, cpu.ram[addr], 0)
+            },
+            AddrMode::ABSX => {
+                let addr = (operands[1] as u16) << 8 | operands[0] as u16;
+                let eff_addr = addr.wrapping_add(cpu.registers.x as u16);
+                (eff_addr as usize, cpu.ram[eff_addr as usize], ((eff_addr & 0xFF00) != (addr & 0xFF00)) as u8)
+            },
+            AddrMode::ABSY => {
+                let addr = (operands[1] as u16) << 8 | operands[0] as u16;
+                let eff_addr = addr.wrapping_add(cpu.registers.y as u16);
+                (eff_addr as usize, cpu.ram[eff_addr as usize], ((eff_addr & 0xFF00) != (addr & 0xFF00)) as u8)
+            },
+            AddrMode::IND0 => {
+                let addr = (operands[1] as u16) << 8 | operands[0] as u16;
+                let eff_addr = (cpu.ram[addr.wrapping_add(1) as usize] as usize) << 8 | cpu.ram[addr as usize] as usize;
+                (eff_addr, cpu.ram[eff_addr], 0)
+            },
+            AddrMode::INDX => {
+                let addr = (operands[0].wrapping_add(cpu.registers.x)) as u8;
+                let eff_addr = (cpu.ram[addr.wrapping_add(1) as usize] as usize) << 8 | cpu.ram[addr as usize] as usize;
+                (eff_addr, cpu.ram[eff_addr], 0)
+            },
+            AddrMode::INDY => {
+                let zpaddr = operands[0];
+                let addr = (cpu.ram[zpaddr.wrapping_add(1) as usize] as u16) << 8 | cpu.ram[zpaddr as usize] as u16;
+                let eff_addr = addr.wrapping_add(cpu.registers.y as u16);
+                (eff_addr as usize, cpu.ram[eff_addr as usize], ((eff_addr & 0xFF00) != (addr & 0xFF00)) as u8)
+            },
+            AddrMode::REL0 => {
+                let addr = cpu.registers.pc as usize;
+                let eff_addr = (addr as i32 + ((operands[0] as i8) as i32)) as usize;
+                (eff_addr, cpu.ram[eff_addr], ((eff_addr & 0xFF00) != (addr & 0xFF00)) as u8)
+            },
+            AddrMode::ZPG0 => {
+                (operands[0] as usize, cpu.ram[operands[0] as usize], 0)
+            },
+            AddrMode::ZPGX => {
+                let eff_addr = (operands[0].wrapping_add(cpu.registers.x)) as usize;
+                (eff_addr, cpu.ram[eff_addr], 0)
+            },
+            AddrMode::ZPGY => {
+                let eff_addr = (operands[0].wrapping_add(cpu.registers.y)) as usize;
+                (eff_addr, cpu.ram[eff_addr], 0)
+            },
+            AddrMode::ACM0 => (0, cpu.registers.a, 0),
+            AddrMode::IMM0 => (0, operands[0], 0),
+            AddrMode::IMP0 => (0, 0, 0)
+        }
     }
 
-    fn get_absx(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
-        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
-        let eff_addr = addr + cpu.registers.x as usize;
-        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
-    }
+    // Commonly performed by quite a few instructions
+    fn update_zn_flags(cpu: &mut Cpu6502, result: u8) {
+        if result == 0 {
+            cpu.registers.p |= StatusFlags::Z;
+        } else {
+            cpu.registers.p &= !StatusFlags::Z;
+        }
 
-    fn get_absy(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
-        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
-        let eff_addr = addr + cpu.registers.y as usize;
-        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
-    }
-
-    fn get_indirect(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
-        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
-        let eff_addr = (cpu.ram[addr + 1] as usize) << 8 | cpu.ram[addr] as usize;
-        (eff_addr, cpu.ram[eff_addr])
-    }
-
-    fn get_indx(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
-        let addr = (operands[0].wrapping_add(cpu.registers.x)) as usize;
-        let eff_addr = (cpu.ram[addr + 1] as usize) << 8 | cpu.ram[addr] as usize;
-        (eff_addr, cpu.ram[eff_addr])
-    }
-
-    fn get_indy(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
-        let zpaddr = operands[0] as usize;
-        let addr = (cpu.ram[zpaddr + 1] as usize) << 8 | cpu.ram[zpaddr] as usize;
-        let eff_addr = addr + cpu.registers.y as usize;
-        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
-    }
-
-    fn get_relative(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
-        let addr = cpu.registers.pc as usize;
-        let eff_addr = (addr as i32 + ((operands[0] as i8) as i32)) as usize;
-        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
-    }
-
-    fn get_zpg(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
-        (operands[0] as usize, cpu.ram[operands[0] as usize])
-    }
-
-    fn get_zpgx(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
-        let eff_addr = (operands[0].wrapping_add(cpu.registers.x)) as usize;
-        (eff_addr, cpu.ram[eff_addr])
-    }
-
-    fn get_zpgy(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
-        let eff_addr = (operands[0].wrapping_add(cpu.registers.y)) as usize;
-        (eff_addr, cpu.ram[eff_addr])
+        if result & (1 << 7) != 0 {
+            cpu.registers.p |= StatusFlags::N;
+        } else {
+            cpu.registers.p &= !StatusFlags::N;
+        }
     }
 
     // Load/Store Operations
+    fn ld (cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        
+        match reg {
+            'a' => cpu.registers.a = value,
+            'x' => cpu.registers.x = value,
+            'y' => cpu.registers.y = value,
+            _ => panic!("Invalid register for ld operation!")
+        };
+
+        update_zn_flags(cpu, value);
+        opcode.cycles + pgx
+    }
     pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        ld(cpu, opcode, operands, 'a')
     }
     pub (super) fn ldx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        ld(cpu, opcode, operands, 'x')
     }
     pub (super) fn ldy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        ld(cpu, opcode, operands, 'y')
+    }
+
+    fn st(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        match reg {
+            'a' => cpu.ram[addr] = cpu.registers.a,
+            'x' => cpu.ram[addr] = cpu.registers.x,
+            'y' => cpu.ram[addr] = cpu.registers.y,
+            _ => panic!("Invalid register for st operation!")
+        }
+
         opcode.cycles
     }
     pub (super) fn sta(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        st(cpu, opcode, operands, 'a')
     }
     pub (super) fn stx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        st(cpu, opcode, operands, 'x')
     }
     pub (super) fn sty(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        st(cpu, opcode, operands, 'y')
     }
 
     // Register Transfers
