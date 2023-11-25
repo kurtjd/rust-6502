@@ -96,7 +96,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::eor, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
     Opcode { instr: instructions::lsr, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
     Opcode { instr: instructions::sre, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::pha, mode: AddrMode::IMP0, bytes: 2, cycles: 3 },
+    Opcode { instr: instructions::pha, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
     Opcode { instr: instructions::eor, mode: AddrMode::IMM0, bytes: 1, cycles: 2 },
     Opcode { instr: instructions::lsr, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
     Opcode { instr: instructions::alr, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
@@ -522,21 +522,38 @@ pub mod instructions {
 
     // Stack Operations
     pub (super) fn tsx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        update_zn_flags(cpu, cpu.registers.s);
+        cpu.registers.x = cpu.registers.s;
         opcode.cycles
     }
     pub (super) fn txs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.s = cpu.registers.x;
         opcode.cycles
     }
     pub (super) fn pha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = cpu.registers.a;
+        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
         opcode.cycles
     }
     pub (super) fn php(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let psw = StatusFlags::from_bits(cpu.registers.p.bits()).unwrap() | StatusFlags::B;
+        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = psw.bits();
+        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
         opcode.cycles
     }
     pub (super) fn pla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.s = cpu.registers.s.wrapping_add(1);
+        cpu.registers.a = cpu.ram[STACK_OFFSET + cpu.registers.s as usize];
+        update_zn_flags(cpu, cpu.registers.a);
         opcode.cycles
     }
     pub (super) fn plp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.s = cpu.registers.s.wrapping_add(1);
+        let result = cpu.ram[STACK_OFFSET + cpu.registers.s as usize];
+        
+        // We should ignore the Break and Extension flags from the pop
+        cpu.registers.p &= StatusFlags::B | StatusFlags::E;
+        cpu.registers.p |= StatusFlags::from_bits(result).unwrap() & !(StatusFlags::B | StatusFlags::E);
         opcode.cycles
     }
 
