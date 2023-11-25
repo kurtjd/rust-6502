@@ -638,15 +638,81 @@ pub mod instructions {
 
     // Shift Operations
     pub (super) fn asl(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        let old_bit7 = value & (1 << 7) != 0;
+        value <<= 1;
+        update_zn_flags(cpu, value);
+
+        cpu.registers.p &= !StatusFlags::C;
+        if old_bit7 {
+            cpu.registers.p |= StatusFlags::C;
+        }
+        
+        match opcode.mode {
+            AddrMode::ACM0 => cpu.registers.a = value,
+            _ => cpu.ram[addr] = value
+        }
+
         opcode.cycles
     }
     pub (super) fn lsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        let old_bit0 = value & 1 != 0;
+        value >>= 1;
+        update_zn_flags(cpu, value);
+
+        cpu.registers.p &= !StatusFlags::C;
+        if old_bit0 {
+            cpu.registers.p |= StatusFlags::C;
+        }
+        
+        match opcode.mode {
+            AddrMode::ACM0 => cpu.registers.a = value,
+            _ => cpu.ram[addr] = value
+        }
+
         opcode.cycles
     }
     pub (super) fn rol(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        let old_bit7 = value & (1 << 7) != 0;
+        value <<= 1;
+        if cpu.registers.p.contains(StatusFlags::C) {
+            value |= 1;
+        }
+
+        cpu.registers.p &= !StatusFlags::C;
+        if old_bit7 {
+            cpu.registers.p |= StatusFlags::C;
+        }
+        
+        match opcode.mode {
+            AddrMode::ACM0 => cpu.registers.a = value,
+            _ => cpu.ram[addr] = value
+        }
+
+        update_zn_flags(cpu, value);
         opcode.cycles
     }
     pub (super) fn ror(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        let old_bit0 = value & 1 != 0;
+        value >>= 1;
+        if cpu.registers.p.contains(StatusFlags::C) {
+            value |= 1 << 7;
+        }
+
+        cpu.registers.p &= !StatusFlags::C;
+        if old_bit0 {
+            cpu.registers.p |= StatusFlags::C;
+        }
+        
+        match opcode.mode {
+            AddrMode::ACM0 => cpu.registers.a = value,
+            _ => cpu.ram[addr] = value
+        }
+
+        update_zn_flags(cpu, value);
         opcode.cycles
     }
 
