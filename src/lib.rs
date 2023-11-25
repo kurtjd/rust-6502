@@ -602,21 +602,37 @@ pub mod instructions {
 
     // Inc/Dec Operations
     pub (super) fn inc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        value = value.wrapping_add(1);
+        update_zn_flags(cpu, value);
+        cpu.ram[addr] = value;
         opcode.cycles
     }
     pub (super) fn inx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.x = cpu.registers.x.wrapping_add(1);
+        update_zn_flags(cpu, cpu.registers.x);
         opcode.cycles
     }
     pub (super) fn iny(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.y = cpu.registers.y.wrapping_add(1);
+        update_zn_flags(cpu, cpu.registers.y);
         opcode.cycles
     }
     pub (super) fn dec(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        value = value.wrapping_sub(1);
+        update_zn_flags(cpu, value);
+        cpu.ram[addr] = value;
         opcode.cycles
     }
     pub (super) fn dex(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.x = cpu.registers.x.wrapping_sub(1);
+        update_zn_flags(cpu, cpu.registers.x);
         opcode.cycles
     }
     pub (super) fn dey(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.y = cpu.registers.y.wrapping_sub(1);
+        update_zn_flags(cpu, cpu.registers.y);
         opcode.cycles
     }
 
