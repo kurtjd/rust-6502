@@ -97,7 +97,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::lsr, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
     Opcode { instr: instructions::sre, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
     Opcode { instr: instructions::pha, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::eor, mode: AddrMode::IMM0, bytes: 1, cycles: 2 },
+    Opcode { instr: instructions::eor, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::lsr, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
     Opcode { instr: instructions::alr, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::jmp, mode: AddrMode::ABS0, bytes: 3, cycles: 3 },
@@ -449,16 +449,11 @@ pub mod instructions {
 
     // Commonly performed by quite a few instructions
     fn update_zn_flags(cpu: &mut Cpu6502, result: u8) {
+        cpu.registers.p &= !(StatusFlags::Z | StatusFlags::N);
         if result == 0 {
             cpu.registers.p |= StatusFlags::Z;
-        } else {
-            cpu.registers.p &= !StatusFlags::Z;
-        }
-
-        if result & (1 << 7) != 0 {
+        } else if result & (1 << 7) != 0 {
             cpu.registers.p |= StatusFlags::N;
-        } else {
-            cpu.registers.p &= !StatusFlags::N;
         }
     }
 
@@ -559,15 +554,32 @@ pub mod instructions {
 
     // Logical Operations
     pub (super) fn and(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        cpu.registers.a &= value;
+        update_zn_flags(cpu, cpu.registers.a);
+        opcode.cycles + pgx
     }
     pub (super) fn eor(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        cpu.registers.a ^= value;
+        update_zn_flags(cpu, cpu.registers.a);
+        opcode.cycles + pgx
     }
     pub (super) fn ora(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        cpu.registers.a |= value;
+        update_zn_flags(cpu, cpu.registers.a);
+        opcode.cycles + pgx
     }
     pub (super) fn bit(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands);
+        let result = cpu.registers.a & value;
+        update_zn_flags(cpu, result);
+        
+        // Copy the V and N bits from memory into status reg
+        cpu.registers.p &= !(StatusFlags::V | StatusFlags::N);
+        let m = StatusFlags::from_bits(value).unwrap() & (StatusFlags::V | StatusFlags::N);
+        cpu.registers.p |= m;
         opcode.cycles
     }
 
