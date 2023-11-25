@@ -388,6 +388,62 @@ enum AddrMode {
 pub mod instructions {
     use super::*;
 
+    fn get_abs(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
+        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
+        (addr, cpu.ram[addr])
+    }
+
+    fn get_absx(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
+        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
+        let eff_addr = addr + cpu.registers.x as usize;
+        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
+    }
+
+    fn get_absy(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
+        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
+        let eff_addr = addr + cpu.registers.y as usize;
+        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
+    }
+
+    fn get_indirect(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
+        let addr = (operands[1] as usize) << 8 | operands[0] as usize;
+        let eff_addr = (cpu.ram[addr + 1] as usize) << 8 | cpu.ram[addr] as usize;
+        (eff_addr, cpu.ram[eff_addr])
+    }
+
+    fn get_indx(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
+        let addr = (operands[0].wrapping_add(cpu.registers.x)) as usize;
+        let eff_addr = (cpu.ram[addr + 1] as usize) << 8 | cpu.ram[addr] as usize;
+        (eff_addr, cpu.ram[eff_addr])
+    }
+
+    fn get_indy(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
+        let zpaddr = operands[0] as usize;
+        let addr = (cpu.ram[zpaddr + 1] as usize) << 8 | cpu.ram[zpaddr] as usize;
+        let eff_addr = addr + cpu.registers.y as usize;
+        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
+    }
+
+    fn get_relative(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8, bool) {
+        let addr = cpu.registers.pc as usize;
+        let eff_addr = (addr as i32 + ((operands[0] as i8) as i32)) as usize;
+        (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr & 0xFF00))
+    }
+
+    fn get_zpg(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
+        (operands[0] as usize, cpu.ram[operands[0] as usize])
+    }
+
+    fn get_zpgx(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
+        let eff_addr = (operands[0].wrapping_add(cpu.registers.x)) as usize;
+        (eff_addr, cpu.ram[eff_addr])
+    }
+
+    fn get_zpgy(cpu: &Cpu6502, operands: &[u8]) -> (usize, u8) {
+        let eff_addr = (operands[0].wrapping_add(cpu.registers.y)) as usize;
+        (eff_addr, cpu.ram[eff_addr])
+    }
+
     // Load/Store Operations
     pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         opcode.cycles
