@@ -463,61 +463,60 @@ pub mod instructions {
     }
 
     // Load/Store Operations
-    fn ld (cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+    pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
-        
-        match reg {
-            'a' => cpu.registers.a = value,
-            'x' => cpu.registers.x = value,
-            'y' => cpu.registers.y = value,
-            _ => panic!("Invalid register for ld operation!")
-        };
-
+        cpu.registers.a = value;
         update_zn_flags(cpu, value);
         opcode.cycles + pgx
     }
-    pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        ld(cpu, opcode, operands, 'a')
-    }
     pub (super) fn ldx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        ld(cpu, opcode, operands, 'x')
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        cpu.registers.x = value;
+        update_zn_flags(cpu, value);
+        opcode.cycles + pgx
     }
     pub (super) fn ldy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        ld(cpu, opcode, operands, 'y')
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        cpu.registers.y = value;
+        update_zn_flags(cpu, value);
+        opcode.cycles + pgx
     }
 
-    fn st(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+    pub (super) fn sta(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
-        match reg {
-            'a' => cpu.ram[addr] = cpu.registers.a,
-            'x' => cpu.ram[addr] = cpu.registers.x,
-            'y' => cpu.ram[addr] = cpu.registers.y,
-            _ => panic!("Invalid register for st operation!")
-        }
-
+        cpu.ram[addr] = cpu.registers.a;
         opcode.cycles
     }
-    pub (super) fn sta(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        st(cpu, opcode, operands, 'a')
-    }
     pub (super) fn stx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        st(cpu, opcode, operands, 'x')
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        cpu.ram[addr] = cpu.registers.x;
+        opcode.cycles
     }
     pub (super) fn sty(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        st(cpu, opcode, operands, 'y')
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        cpu.ram[addr] = cpu.registers.y;
+        opcode.cycles
     }
 
     // Register Transfers
     pub (super) fn tax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        update_zn_flags(cpu, cpu.registers.a);
+        cpu.registers.x = cpu.registers.a;
         opcode.cycles
     }
     pub (super) fn tay(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        update_zn_flags(cpu, cpu.registers.a);
+        cpu.registers.y = cpu.registers.a;
         opcode.cycles
     }
     pub (super) fn txa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        update_zn_flags(cpu, cpu.registers.x);
+        cpu.registers.a = cpu.registers.x;
         opcode.cycles
     }
     pub (super) fn tya(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        update_zn_flags(cpu, cpu.registers.y);
+        cpu.registers.a = cpu.registers.y;
         opcode.cycles
     }
 
