@@ -410,8 +410,10 @@ pub mod instructions {
                 (eff_addr as usize, cpu.ram[eff_addr as usize], ((eff_addr & 0xFF00) != (addr & 0xFF00)) as u8)
             },
             AddrMode::IND0 => {
-                let addr = (operands[1] as u16) << 8 | operands[0] as u16;
-                let eff_addr = (cpu.ram[addr.wrapping_add(1) as usize] as usize) << 8 | cpu.ram[addr as usize] as usize;
+                let lsb_addr = (operands[1] as usize) << 8 | operands[0] as usize;
+                // Have to add to lsb only of msb_addr due to CPU bug
+                let msb_addr = (operands[1] as usize) << 8 | operands[0].wrapping_add(1) as usize;
+                let eff_addr = (cpu.ram[msb_addr] as usize) << 8 | cpu.ram[lsb_addr] as usize;
                 (eff_addr, cpu.ram[eff_addr], 0)
             },
             AddrMode::INDX => {
@@ -718,12 +720,29 @@ pub mod instructions {
 
     // Jump/Call Operations
     pub (super) fn jmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        cpu.registers.pc = addr as u16;
         opcode.cycles
     }
     pub (super) fn jsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        //let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        let prev = cpu.registers.pc - 1;
+        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = (prev >> 8) as u8;
+        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
+        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = (prev & 0xFF) as u8;
+        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
+        
+        // Overlapping whackery
+        let addr = (cpu.ram[cpu.registers.pc as usize - opcode.bytes as usize + 1] as usize) << 8 | operands[0] as usize;
+        cpu.registers.pc = addr as u16;
         opcode.cycles
     }
     pub (super) fn rts(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.s = cpu.registers.s.wrapping_add(1);
+        cpu.registers.pc = cpu.ram[STACK_OFFSET + cpu.registers.s as usize] as u16;
+        cpu.registers.s = cpu.registers.s.wrapping_add(1);
+        cpu.registers.pc = (cpu.ram[STACK_OFFSET + cpu.registers.s as usize] as u16) << 8 | cpu.registers.pc;
+        cpu.registers.pc += 1;
         opcode.cycles
     }
 
