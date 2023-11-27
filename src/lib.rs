@@ -6,6 +6,7 @@ use bitflags::bitflags;
 const MEM_SIZE: usize = 0x10000;
 const STACK_OFFSET: usize = 0x0100;
 const RESET_VECTOR: usize = 0xFFFC;
+const INTR_VECTOR: usize = 0xFFFE;
 
 struct Opcode {
     instr: fn(&mut Cpu6502, &Opcode, &[u8]) -> u8,
@@ -16,7 +17,7 @@ struct Opcode {
 
 static OPCODES: [Opcode; 0x100] = [
     // $00-$0F
-    Opcode { instr: instructions::brk, mode: AddrMode::IMP0, bytes: 1, cycles: 7 },
+    Opcode { instr: instructions::brk, mode: AddrMode::IMP0, bytes: 2, cycles: 7 },
     Opcode { instr: instructions::ora, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
     Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
     Opcode { instr: instructions::slo, mode: AddrMode::INDX, bytes: 2, cycles: 8 },
@@ -459,6 +460,25 @@ pub mod instructions {
         }
     }
 
+    // For easy stack manipulation
+    fn stack_push(cpu: &mut Cpu6502, value: u8) {
+        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = value;
+        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
+    }
+    fn stack_pop(cpu: &mut Cpu6502) -> u8 {
+        cpu.registers.s = cpu.registers.s.wrapping_add(1);
+        cpu.ram[STACK_OFFSET + cpu.registers.s as usize]
+    }
+    fn stack_push16(cpu: &mut Cpu6502, value: u16) {
+        stack_push(cpu, (value >> 8) as u8);
+        stack_push(cpu, (value & 0xFF) as u8);
+    }
+    fn stack_pop16(cpu: &mut Cpu6502) -> u16 {
+        let lsb = stack_pop(cpu) as u16;
+        let msb = stack_pop(cpu) as u16;
+        msb << 8 | lsb
+    }
+
     // Load/Store Operations
     pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
@@ -528,25 +548,21 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn pha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = cpu.registers.a;
-        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
+        stack_push(cpu, cpu.registers.a);
         opcode.cycles
     }
     pub (super) fn php(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         let psw = StatusFlags::from_bits(cpu.registers.p.bits()).unwrap() | StatusFlags::B;
-        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = psw.bits();
-        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
+        stack_push(cpu, psw.bits());
         opcode.cycles
     }
     pub (super) fn pla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        cpu.registers.s = cpu.registers.s.wrapping_add(1);
-        cpu.registers.a = cpu.ram[STACK_OFFSET + cpu.registers.s as usize];
+        cpu.registers.a = stack_pop(cpu);
         update_zn_flags(cpu, cpu.registers.a);
         opcode.cycles
     }
     pub (super) fn plp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        cpu.registers.s = cpu.registers.s.wrapping_add(1);
-        let result = cpu.ram[STACK_OFFSET + cpu.registers.s as usize];
+        let result = stack_pop(cpu);
         
         // We should ignore the Break and Extension flags from the pop
         cpu.registers.p &= StatusFlags::B | StatusFlags::E;
@@ -727,22 +743,15 @@ pub mod instructions {
     pub (super) fn jsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         //let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
         let prev = cpu.registers.pc - 1;
-        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = (prev >> 8) as u8;
-        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
-        cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = (prev & 0xFF) as u8;
-        cpu.registers.s = cpu.registers.s.wrapping_sub(1);
-        
+        stack_push16(cpu, prev);
+
         // Overwriting whackery (TODO)
         let addr = (cpu.ram[cpu.registers.pc as usize - opcode.bytes as usize + 1] as usize) << 8 | operands[0] as usize;
         cpu.registers.pc = addr as u16;
         opcode.cycles
     }
     pub (super) fn rts(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        cpu.registers.s = cpu.registers.s.wrapping_add(1);
-        cpu.registers.pc = cpu.ram[STACK_OFFSET + cpu.registers.s as usize] as u16;
-        cpu.registers.s = cpu.registers.s.wrapping_add(1);
-        cpu.registers.pc = (cpu.ram[STACK_OFFSET + cpu.registers.s as usize] as u16) << 8 | cpu.registers.pc;
-        cpu.registers.pc += 1;
+        cpu.registers.pc = stack_pop16(cpu) + 1;
         opcode.cycles
     }
 
@@ -804,12 +813,31 @@ pub mod instructions {
 
     // System Operations
     pub (super) fn brk(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // Push PC to stack
+        stack_push16(cpu, cpu.registers.pc); 
+
+        // Push status reg to stack
+        php(cpu, opcode, operands);
+
+        // Get address at interrupt vector and jump to it
+        let lsb = cpu.ram[INTR_VECTOR] as u16;
+        let msb = cpu.ram[INTR_VECTOR + 1] as u16;
+        cpu.registers.pc = msb << 8 | lsb;
+
+        // Set Interrupt Disable flag
+        cpu.registers.p |= StatusFlags::I;
         opcode.cycles
     }
     pub (super) fn nop(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // Intentionally do nothing
         opcode.cycles
     }
     pub (super) fn rti(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // Pop status reg
+        plp(cpu, opcode, operands);
+
+        // Pop PC
+        cpu.registers.pc = stack_pop16(cpu);
         opcode.cycles
     }
 

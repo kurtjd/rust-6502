@@ -66,16 +66,16 @@ fn opcode_test(path: &PathBuf) {
         cpu.tick();
 
         // Check the final state of the CPU
-        assert_eq!(cpu.registers.pc, t.final_state.pc, "Incorrect program counter!");
-        assert_eq!(cpu.registers.s, t.final_state.s, "Incorrect stack pointer!");
-        assert_eq!(cpu.registers.a, t.final_state.a, "Incorrect accumulator!");
-        assert_eq!(cpu.registers.x, t.final_state.x, "Incorrect X register!");
-        assert_eq!(cpu.registers.y, t.final_state.y, "Incorrect Y register!");
+        assert_eq!(cpu.registers.pc, t.final_state.pc, "Test ({}): Incorrect program counter!", t.name);
+        assert_eq!(cpu.registers.s, t.final_state.s, "Test ({}): Incorrect stack pointer!", t.name);
+        assert_eq!(cpu.registers.a, t.final_state.a, "Test ({}): Incorrect accumulator!", t.name);
+        assert_eq!(cpu.registers.x, t.final_state.x, "test ({}): Incorrect X register!", t.name);
+        assert_eq!(cpu.registers.y, t.final_state.y, "Test ({}): Incorrect Y register!", t.name);
         assert_eq!(cpu.registers.p.bits(), t.final_state.p, "Incorrect status register!");
 
         // Check the final state of RAM
         for m in &t.final_state.ram {
-            assert_eq!(cpu.ram[m.address as usize], m.value, "Incorrect RAM!");
+            assert_eq!(cpu.ram[m.address as usize], m.value, "Test ({}): Incorrect RAM @ {}!", t.name, m.address);
         }
 
         // TODO: Check cycles
