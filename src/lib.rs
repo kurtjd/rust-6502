@@ -732,7 +732,7 @@ pub mod instructions {
         cpu.ram[STACK_OFFSET + cpu.registers.s as usize] = (prev & 0xFF) as u8;
         cpu.registers.s = cpu.registers.s.wrapping_sub(1);
         
-        // Overlapping whackery
+        // Overwriting whackery (TODO)
         let addr = (cpu.ram[cpu.registers.pc as usize - opcode.bytes as usize + 1] as usize) << 8 | operands[0] as usize;
         cpu.registers.pc = addr as u16;
         opcode.cycles
@@ -774,24 +774,31 @@ pub mod instructions {
 
     // Status Flag Operations
     pub (super) fn clc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.p &= !StatusFlags::C;
         opcode.cycles
     }
     pub (super) fn cld(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.p &= !StatusFlags::D;
         opcode.cycles
     }
     pub (super) fn cli(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.p &= !StatusFlags::I;
         opcode.cycles
     }
     pub (super) fn clv(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.p &= !StatusFlags::V;
         opcode.cycles
     }
     pub (super) fn sec(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.p |= StatusFlags::C;
         opcode.cycles
     }
     pub (super) fn sed(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.p |= StatusFlags::D;
         opcode.cycles
     }
     pub (super) fn sei(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.p |= StatusFlags::I;
         opcode.cycles
     }
 
