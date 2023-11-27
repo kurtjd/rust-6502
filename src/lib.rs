@@ -35,7 +35,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::slo, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
 
     // $10 - $1F
-    Opcode { instr: instructions::bpl, mode: AddrMode::REL0, bytes: 2, cycles: 3 },
+    Opcode { instr: instructions::bpl, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::ora, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
     Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
     Opcode { instr: instructions::slo, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
@@ -107,7 +107,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::sre, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
     
     // $50 - $5F
-    Opcode { instr: instructions::bvc, mode: AddrMode::REL0, bytes: 2, cycles: 3 },
+    Opcode { instr: instructions::bvc, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::eor, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
     Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
     Opcode { instr: instructions::sre, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
@@ -179,7 +179,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::sax, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
 
     // $90 - $9F
-    Opcode { instr: instructions::bcc, mode: AddrMode::REL0, bytes: 2, cycles: 3 },
+    Opcode { instr: instructions::bcc, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::sta, mode: AddrMode::INDY, bytes: 2, cycles: 6 },
     Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
     Opcode { instr: instructions::sha, mode: AddrMode::INDY, bytes: 2, cycles: 6 },
@@ -251,7 +251,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::dcp, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
 
     // $D0 - $DF
-    Opcode { instr: instructions::bne, mode: AddrMode::REL0, bytes: 2, cycles: 3 },
+    Opcode { instr: instructions::bne, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::cmp, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
     Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
     Opcode { instr: instructions::dcp, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
@@ -429,9 +429,10 @@ pub mod instructions {
                 (eff_addr as usize, cpu.ram[eff_addr as usize], ((eff_addr & 0xFF00) != (addr & 0xFF00)) as u8)
             },
             AddrMode::REL0 => {
-                let addr = cpu.registers.pc as usize;
-                let eff_addr = (addr as i32 + ((operands[0] as i8) as i32)) as usize;
-                (eff_addr, cpu.ram[eff_addr], ((eff_addr & 0xFF00) != (addr & 0xFF00)) as u8)
+                let addr = cpu.registers.pc as i32;
+                let offset = (operands[0] as i8) as i32;
+                let eff_addr = ((addr + offset) as u16) as usize;
+                (eff_addr, cpu.ram[eff_addr], ((eff_addr & 0xFF00) != (addr as usize & 0xFF00)) as u8)
             },
             AddrMode::ZPG0 => {
                 (operands[0] as usize, cpu.ram[operands[0] as usize], 0)
@@ -756,29 +757,42 @@ pub mod instructions {
     }
 
     // Branch Operations
-    pub (super) fn bcc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
-    }
-    pub (super) fn bcs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
-    }
-    pub (super) fn beq(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    fn branch(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], flag: StatusFlags, set: bool) -> u8 {
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+
+        // Rust cmon why... I just want to pass in a damn bit flag and you make me do this??
+        let branch_set = set && (cpu.registers.p.bits() & flag.bits()) != 0;
+        let branch_clr = !set && (cpu.registers.p.bits() & flag.bits()) == 0;
+
+        if branch_set || branch_clr {
+            cpu.registers.pc = addr as u16;
+        }
+
         opcode.cycles
     }
     pub (super) fn bmi(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
-    }
-    pub (super) fn bne(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        branch(cpu, opcode, operands, StatusFlags::N, true)
     }
     pub (super) fn bpl(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
-    }
-    pub (super) fn bvc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        branch(cpu, opcode, operands, StatusFlags::N, false)
     }
     pub (super) fn bvs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        branch(cpu, opcode, operands, StatusFlags::V, true)
+    }
+    pub (super) fn bvc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        branch(cpu, opcode, operands, StatusFlags::V, false)
+    }
+    pub (super) fn beq(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        branch(cpu, opcode, operands, StatusFlags::Z, true)
+    }
+    pub (super) fn bne(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        branch(cpu, opcode, operands, StatusFlags::Z, false)
+    }
+    pub (super) fn bcs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        branch(cpu, opcode, operands, StatusFlags::C, true)
+    }
+    pub (super) fn bcc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        branch(cpu, opcode, operands, StatusFlags::C, false)
     }
 
     // Status Flag Operations
