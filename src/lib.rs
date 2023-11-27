@@ -764,11 +764,17 @@ pub mod instructions {
         let branch_set = set && (cpu.registers.p.bits() & flag.bits()) != 0;
         let branch_clr = !set && (cpu.registers.p.bits() & flag.bits()) == 0;
 
+        let mut cycles = opcode.cycles;
         if branch_set || branch_clr {
+            // Add +1 cycle for branch, +2 if branching to differnt page
+            cycles += match (addr as u16) & 0xFF00 != cpu.registers.pc & 0xFF00 {
+                true => 2,
+                false => 1
+            };
             cpu.registers.pc = addr as u16;
         }
 
-        opcode.cycles
+        cycles
     }
     pub (super) fn bmi(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         branch(cpu, opcode, operands, StatusFlags::N, true)
