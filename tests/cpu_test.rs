@@ -71,7 +71,7 @@ fn opcode_test(path: &PathBuf) {
         assert_eq!(cpu.registers.a, t.final_state.a, "Test ({}): Incorrect accumulator!", t.name);
         assert_eq!(cpu.registers.x, t.final_state.x, "test ({}): Incorrect X register!", t.name);
         assert_eq!(cpu.registers.y, t.final_state.y, "Test ({}): Incorrect Y register!", t.name);
-        assert_eq!(cpu.registers.p.bits(), t.final_state.p, "Incorrect status register!");
+        assert_eq!(cpu.registers.p.bits(), t.final_state.p, "Test ({}): Incorrect status register!", t.name);
 
         // Check the final state of RAM
         for m in &t.final_state.ram {

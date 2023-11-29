@@ -603,20 +603,101 @@ pub mod instructions {
     }
 
     // Arithmetic Operations
+    fn compare(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let reg = match reg {
+            'a' => cpu.registers.a,
+            'x' => cpu.registers.x,
+            'y' => cpu.registers.y,
+            _ => 0 // Shouldn't get here
+        };
+        let result = reg.wrapping_sub(value);
+
+        update_zn_flags(cpu, result);
+        cpu.registers.p &= !StatusFlags::C;
+        if reg >= value {
+            cpu.registers.p |= StatusFlags::C;
+        }
+
+        opcode.cycles + pgx
+    }
+    fn add(cpu: &mut Cpu6502, operand: u8) {
+        let carry = match cpu.registers.p.contains(StatusFlags::C) {
+            true => 1,
+            false => 0
+        };
+        let op1 = cpu.registers.a as u16;
+        let op2 = operand as u16;
+        
+        let bsum = op1 + op2 + carry;
+        let mut sum = match cpu.registers.p.contains(StatusFlags::D) {
+            true => {
+                // Add low nibbles
+                let mut res = carry + (op1 & 0xF) + (op2 & 0xF);
+                
+                // Perform correction and set the carry bit
+                if res  > 0x09 {
+                    res += 0x06;
+                    res = (res & 0x0F) | 0x10;
+                }
+
+                // Add high nibbles plus corrected low nibble
+                (op1 & 0xF0) + (op2 & 0xF0) + res
+            }
+            false => bsum
+        };
+
+        // Must set negative and overflow flags before correcting high nibble
+        if sum & (1 << 7) != 0 {
+            cpu.registers.p |= StatusFlags::N;
+        } else {
+            cpu.registers.p &= !StatusFlags::N;
+        }
+        if (!(op1 ^ op2) & (op1 ^ sum) & (1 << 7)) != 0 {
+            cpu.registers.p |= StatusFlags::V;
+        } else {
+            cpu.registers.p &= !StatusFlags::V;
+        }
+
+        // Correct high nibble
+        if cpu.registers.p.contains(StatusFlags::D) && sum > 0x9F {
+            sum += 0x60;
+        }
+
+        // Now set carry flag
+        if sum > 0xFF {
+            cpu.registers.p |= StatusFlags::C;
+        } else {
+            cpu.registers.p &= !StatusFlags::C;
+        }
+
+        // Zero flag is always set based on binary addition
+        if (bsum as u8) == 0 {
+            cpu.registers.p |= StatusFlags::Z;
+        } else {
+            cpu.registers.p &= !StatusFlags::Z;
+        }
+
+        cpu.registers.a = sum as u8;
+    }
     pub (super) fn adc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        add(cpu, value);
+        opcode.cycles + pgx
     }
     pub (super) fn sbc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        add(cpu, !value);
+        opcode.cycles + pgx
     }
     pub (super) fn cmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        compare(cpu, opcode, operands, 'a') 
     }
     pub (super) fn cpx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        compare(cpu, opcode, operands, 'x') 
     }
     pub (super) fn cpy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        compare(cpu, opcode, operands, 'y') 
     }
 
     // Inc/Dec Operations
