@@ -1046,6 +1046,8 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn rra(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        ror(cpu, opcode, operands);
+        adc(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn sax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
