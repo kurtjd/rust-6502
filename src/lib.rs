@@ -1007,7 +1007,7 @@ pub mod instructions {
         opcode.cycles
     }
 
-    // Illegal/Undefined Operations
+    // Illegal/Undefined Operations (TODO: Cycle counts will need some work)
     pub (super) fn jam(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         cpu.registers.pc = cpu.registers.pc.wrapping_sub(opcode.bytes as u16);
         cpu.halted = true;
@@ -1043,6 +1043,7 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn arr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, complicated
         opcode.cycles
     }
     pub (super) fn rra(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
@@ -1051,7 +1052,9 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn sax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
+        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
+        cpu.ram[addr] = cpu.registers.a & cpu.registers.x;
+        opcode.cycles + pgx
     }
     pub (super) fn ane(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         opcode.cycles
