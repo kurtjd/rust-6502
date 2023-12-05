@@ -1038,6 +1038,8 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn alr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        and(cpu, opcode, operands);
+        lsr(cpu, &OPCODES[0x4A], operands); // Always perform lsr on accumulator (opcode $4A)
         opcode.cycles
     }
     pub (super) fn arr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
