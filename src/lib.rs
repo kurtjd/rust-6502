@@ -64,7 +64,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::plp, mode: AddrMode::IMP0, bytes: 1, cycles: 4 },
     Opcode { instr: instructions::and, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::rol, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::anc, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
+    Opcode { instr: instructions::an2, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::bit, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
     Opcode { instr: instructions::and, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
     Opcode { instr: instructions::rol, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
@@ -329,7 +329,8 @@ pub struct Registers {
 
 pub struct Cpu6502 {
     pub registers: Registers,
-    pub ram: [u8; MEM_SIZE]
+    pub ram: [u8; MEM_SIZE],
+    halted: bool
 }
 
 impl Cpu6502 {
@@ -344,7 +345,8 @@ impl Cpu6502 {
                 p: StatusFlags::empty()
             },
 
-            ram: [0; MEM_SIZE]
+            ram: [0; MEM_SIZE],
+            halted: false
         }
     }
 
@@ -359,6 +361,8 @@ impl Cpu6502 {
     }
 
     pub fn tick(&mut self) -> u8 {
+        if self.halted { return 0 } // Do nothing if halted, typically after encountering a 'jam'
+
         let fetch = self.ram[self.registers.pc as usize] as usize;
         let opcode = &OPCODES[fetch];
 
@@ -1005,12 +1009,17 @@ pub mod instructions {
 
     // Illegal/Undefined Operations
     pub (super) fn jam(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.registers.pc = cpu.registers.pc.wrapping_sub(opcode.bytes as u16);
+        cpu.halted = true;
         opcode.cycles
     }
     pub (super) fn slo(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         opcode.cycles
     }
     pub (super) fn anc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        opcode.cycles
+    }
+    pub (super) fn an2(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         opcode.cycles
     }
     pub (super) fn rla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
