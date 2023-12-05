@@ -64,7 +64,7 @@ static OPCODES: [Opcode; 0x100] = [
     Opcode { instr: instructions::plp, mode: AddrMode::IMP0, bytes: 1, cycles: 4 },
     Opcode { instr: instructions::and, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::rol, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::an2, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
+    Opcode { instr: instructions::anc, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
     Opcode { instr: instructions::bit, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
     Opcode { instr: instructions::and, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
     Opcode { instr: instructions::rol, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
@@ -1027,10 +1027,9 @@ pub mod instructions {
         }
         opcode.cycles
     }
-    pub (super) fn an2(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        opcode.cycles
-    }
     pub (super) fn rla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        rol(cpu, opcode, operands);
+        and(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn sre(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
