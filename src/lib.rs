@@ -621,13 +621,15 @@ pub mod instructions {
 
         opcode.cycles + pgx
     }
-    fn add(cpu: &mut Cpu6502, operand: u8) {
+    pub (super) fn adc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+
         let carry = match cpu.registers.p.contains(StatusFlags::C) {
             true => 1,
             false => 0
         };
         let op1 = cpu.registers.a as u16;
-        let op2 = operand as u16;
+        let op2 = value as u16;
         
         let bsum = op1 + op2 + carry;
         let mut sum = match cpu.registers.p.contains(StatusFlags::D) {
@@ -679,15 +681,64 @@ pub mod instructions {
         }
 
         cpu.registers.a = sum as u8;
-    }
-    pub (super) fn adc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
-        add(cpu, value);
         opcode.cycles + pgx
     }
     pub (super) fn sbc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
-        add(cpu, !value);
+        
+        // We subtract the inverted carry bit
+        let carry = match cpu.registers.p.contains(StatusFlags::C) {
+            true => 0,
+            false => 1
+        };
+        let op1 = cpu.registers.a;
+        let op2 = value;
+
+        let bsum = (op1 as u16).wrapping_sub(op2 as u16).wrapping_sub(carry as u16);
+        let sum = match cpu.registers.p.contains(StatusFlags::D) {
+            true => {
+                // Subtract low nibbles and inverted carry
+                let mut low = (op1 & 0xF).wrapping_sub(op2 & 0xF).wrapping_sub(carry);
+                
+                // Perform correction
+                // 'Fix' here represents if the low nibble overflowed
+                let mut fix = 0;
+                if (low & 0x10) != 0 {
+                    low -= 0x06;
+                    fix = 1;
+                }
+
+                // Subtract high nibbles and 1 if corrected lower nibble overflowed
+                let mut high = (op1 >> 4).wrapping_sub(op2 >> 4).wrapping_sub(fix);
+                if (high & 0x10) != 0 {
+                    high -= 0x6;
+                }
+
+                // Merge high and low nibbles
+                (high << 4) | (low & 0xF)
+            }
+            false => bsum as u8
+        };
+
+        // Update flags (SBC always updates flags based on binary result)
+        // Thus decimal mode has no affect here
+        update_zn_flags(cpu, bsum as u8);
+
+        // We check overflow based on the 1's complement of the operand
+        if (!(op1 ^ !op2) & (op1 ^ bsum as u8) & (1 << 7)) != 0 {
+            cpu.registers.p |= StatusFlags::V;
+        } else {
+            cpu.registers.p &= !StatusFlags::V;
+        }
+
+        // In SBC case, carry is set if a borrow did NOT occur
+        if bsum <= 0xFF {
+            cpu.registers.p |= StatusFlags::C;
+        } else {
+            cpu.registers.p &= !StatusFlags::C;
+        }
+
+        cpu.registers.a = sum;
         opcode.cycles + pgx
     }
     pub (super) fn cmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
