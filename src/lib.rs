@@ -1014,6 +1014,8 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn slo(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        asl(cpu, opcode, operands);
+        ora(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn anc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
