@@ -1019,6 +1019,12 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn anc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        and(cpu, opcode, operands);
+        if cpu.registers.a & (1 << 7) != 0 {
+            cpu.registers.p |= StatusFlags::C;
+        } else {
+            cpu.registers.p &= !StatusFlags::C;
+        }
         opcode.cycles
     }
     pub (super) fn an2(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
