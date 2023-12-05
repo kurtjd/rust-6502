@@ -1033,6 +1033,8 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn sre(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        lsr(cpu, opcode, operands);
+        eor(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn alr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
