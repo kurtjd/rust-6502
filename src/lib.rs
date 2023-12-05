@@ -874,13 +874,23 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn jsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        //let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
-        let prev = cpu.registers.pc - 1;
-        stack_push16(cpu, prev);
+        /* Because jsr can overwrite its operands during operation, we have to emulate individual
+        cycles. That's the reason for this hackish way of doing things. */
 
-        // Overwriting whackery (TODO)
-        let addr = (cpu.ram[cpu.registers.pc as usize - opcode.bytes as usize + 1] as usize) << 8 | operands[0] as usize;
-        cpu.registers.pc = addr as u16;
+        // Reset the PC to just after opcode fetch (which was originally incremented during tick())
+        cpu.registers.pc -= (opcode.bytes - 1) as u16;
+
+        // Fetch the low byte of jump address, then increment pc
+        let adl: u16 = cpu.ram[cpu.registers.pc as usize] as u16;
+        cpu.registers.pc += 1;
+
+        // Push the PC to the stack
+        stack_push16(cpu, cpu.registers.pc);
+
+        // Fetch the high byte of jump address, and set PC
+        let adh: u16 = cpu.ram[cpu.registers.pc as usize] as u16;
+        cpu.registers.pc = (adh << 8) | adl;
+
         opcode.cycles
     }
     pub (super) fn rts(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
