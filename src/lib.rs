@@ -1106,6 +1106,15 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn sbx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let reg = cpu.registers.a & cpu.registers.x;
+        cpu.registers.x = reg.wrapping_sub(operands[0]);
+        
+        // Do a compare, but on (A AND X) instead of normally one
+        update_zn_flags(cpu, cpu.registers.x);
+        cpu.registers.p &= !StatusFlags::C;
+        if reg >= operands[0] {
+            cpu.registers.p |= StatusFlags::C;
+        }
         opcode.cycles
     }
     pub (super) fn isc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
