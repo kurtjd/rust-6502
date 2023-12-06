@@ -1077,7 +1077,8 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn lax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, unstable
+        lda(cpu, opcode, operands);
+        ldx(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn las(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
@@ -1090,9 +1091,18 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn lxa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, unstable
         opcode.cycles
     }
     pub (super) fn dcp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
+        dec(cpu, opcode, operands);
+
+        /* In some indirect addressing modes, it's possible for dec to decrement
+        the operand which is also used as address. So we can no longer use the operands
+        for addressing. Thus we cache the address before calling dec and call cmp
+        immediate directly with the value in RAM at that address. */
+        cmp(cpu, &OPCODES[0xC9], &[cpu.ram[addr]]);
         opcode.cycles
     }
     pub (super) fn sbx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
