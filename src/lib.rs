@@ -1057,24 +1057,36 @@ pub mod instructions {
         opcode.cycles + pgx
     }
     pub (super) fn ane(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, unstable
         opcode.cycles
     }
     pub (super) fn sha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, unstable
         opcode.cycles
     }
     pub (super) fn shx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, unstable
         opcode.cycles
     }
     pub (super) fn shy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, unstable
         opcode.cycles
     }
     pub (super) fn tas(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, unstable
         opcode.cycles
     }
     pub (super) fn lax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        // TODO, unstable
         opcode.cycles
     }
     pub (super) fn las(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let result = value & cpu.registers.s;
+        update_zn_flags(cpu, result);
+        cpu.registers.a = result;
+        cpu.registers.x = result;
+        cpu.registers.s = result;
         opcode.cycles
     }
     pub (super) fn lxa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
