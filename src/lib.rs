@@ -1118,6 +1118,8 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn isc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        inc(cpu, opcode, operands);
+        sbc(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn usb(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
