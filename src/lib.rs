@@ -1111,9 +1111,10 @@ pub mod instructions {
         
         // Do a compare, but on (A AND X) instead of normally one
         update_zn_flags(cpu, cpu.registers.x);
-        cpu.registers.p &= !StatusFlags::C;
         if reg >= operands[0] {
             cpu.registers.p |= StatusFlags::C;
+        } else {
+            cpu.registers.p &= !StatusFlags::C;
         }
         opcode.cycles
     }
@@ -1123,6 +1124,7 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn usb(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        sbc(cpu, opcode, operands);
         opcode.cycles
     }
 }
