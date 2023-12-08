@@ -1098,24 +1098,48 @@ pub mod instructions {
         seems to be the most common result for 'magic' and is the constant used in
         Tom Harte's tests. */
         let magic = 0xEE;
+
         cpu.registers.a = (cpu.registers.a | magic) & cpu.registers.x;
         and(cpu, opcode, operands);
+
+        opcode.cycles
+    }
+    fn shr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+        let (mut addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
+
+        let mut result = match reg {
+            'a' => cpu.registers.a & cpu.registers.x,
+            'x' => cpu.registers.x,
+            'y' => cpu.registers.y,
+            _ => 0 // Shouldn't get here
+        };
+
+        /* If we have a page crossing, we should NOT increment the high byte, and the result
+        of the AND operation should overwrite the high byte of the effective address. */
+        if pgx != 0 {
+            let adh = (addr >> 8) as u8;
+            result &= adh;
+            addr = ((result as usize) << 8) | (addr & 0xFF);
+        } else {
+            let adh = ((addr >> 8) + 1) as u8;
+            result &= adh;
+        }
+
+        cpu.ram[addr] = result;
         opcode.cycles
     }
     pub (super) fn sha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, unstable
-        opcode.cycles
+        shr(cpu, opcode, operands, 'a')
     }
     pub (super) fn shx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, unstable
-        opcode.cycles
+        shr(cpu, opcode, operands, 'x')
     }
     pub (super) fn shy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, unstable
-        opcode.cycles
+        shr(cpu, opcode, operands, 'y')
     }
     pub (super) fn tas(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, unstable
+        cpu.registers.s = cpu.registers.a & cpu.registers.x;
+        sha(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn lax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
@@ -1138,9 +1162,11 @@ pub mod instructions {
         seems to be the most common result for 'magic' and is the constant used in
         Tom Harte's tests. */
         let magic = 0xEE;
+
         cpu.registers.a |= magic;
         and(cpu, opcode, operands);
         cpu.registers.x = cpu.registers.a;
+
         opcode.cycles
     }
     pub (super) fn dcp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
