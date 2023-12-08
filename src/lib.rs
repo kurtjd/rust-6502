@@ -1045,7 +1045,7 @@ pub mod instructions {
     pub (super) fn arr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         and(cpu, opcode, operands);
         let and_res = cpu.registers.a;
-        ror(cpu, &OPCODES[0x6A], operands);
+        ror(cpu, &OPCODES[0x6A], operands); // Always perform ror on accumulator (opcode $6A)
         let ror_res = cpu.registers.a;
 
         // This instruction used adc circuitry, so if in decimal mode have to perform fixups
@@ -1093,7 +1093,13 @@ pub mod instructions {
         opcode.cycles + pgx
     }
     pub (super) fn ane(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, unstable
+        /* This is a highly unstable operation with non-deterministic behavior in reality.
+        Things like temperature can affect the value of this 'magic' constant! However, 0xEE
+        seems to be the most common result for 'magic' and is the constant used in
+        Tom Harte's tests. */
+        let magic = 0xEE;
+        cpu.registers.a = (cpu.registers.a | magic) & cpu.registers.x;
+        and(cpu, opcode, operands);
         opcode.cycles
     }
     pub (super) fn sha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
@@ -1127,7 +1133,14 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn lxa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, unstable
+        /* This is a highly unstable operation with non-deterministic behavior in reality.
+        Things like temperature can affect the value of this 'magic' constant! However, 0xEE
+        seems to be the most common result for 'magic' and is the constant used in
+        Tom Harte's tests. */
+        let magic = 0xEE;
+        cpu.registers.a |= magic;
+        and(cpu, opcode, operands);
+        cpu.registers.x = cpu.registers.a;
         opcode.cycles
     }
     pub (super) fn dcp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
