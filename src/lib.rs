@@ -1043,7 +1043,43 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn arr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        // TODO, complicated
+        and(cpu, opcode, operands);
+        let and_res = cpu.registers.a;
+        ror(cpu, &OPCODES[0x6A], operands);
+        let ror_res = cpu.registers.a;
+
+        // This instruction used adc circuitry, so if in decimal mode have to perform fixups
+        if cpu.registers.p.contains(StatusFlags::D) {
+            let mut result = ror_res & 0xF;
+            if and_res & 0xF > 4 {
+                result += 6;
+            }
+            result &= 0x0F;
+            result |= ror_res & 0xF0;
+
+            if and_res & 0xF0 > 0x40 {
+                result = result.wrapping_add(0x60);
+                cpu.registers.p |= StatusFlags::C;
+            } else {
+                cpu.registers.p &= !StatusFlags::C;
+            }
+
+            cpu.registers.a = result;
+        } else {
+            if ror_res & (1 << 6) != 0 {
+                cpu.registers.p |= StatusFlags::C;
+            } else {
+                cpu.registers.p &= !StatusFlags::C;
+            }
+        }
+
+        // Overflow is set based on XOR of bits 6 and 5 of result
+        if ((ror_res >> 6) & 1) ^ ((ror_res >> 5) & 1) != 0 {
+            cpu.registers.p |= StatusFlags::V;
+        } else {
+            cpu.registers.p &= !StatusFlags::V;
+        }
+
         opcode.cycles
     }
     pub (super) fn rra(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
