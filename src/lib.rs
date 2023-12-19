@@ -1024,29 +1024,34 @@ pub mod instructions {
         opcode.cycles
     }
     pub (super) fn rts(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+        cpu.read(STACK_OFFSET + cpu.registers.s as usize); // Dummy read
         cpu.registers.pc = stack_pop16(cpu) + 1;
+        cpu.read((cpu.registers.pc - 1) as usize); // Another dummy read
         opcode.cycles
     }
 
     // Branch Operations
     fn branch(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], flag: StatusFlags, set: bool) -> u8 {
-        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         // Rust cmon why... I just want to pass in a damn bit flag and you make me do this??
         let branch_set = set && (cpu.registers.p.bits() & flag.bits()) != 0;
         let branch_clr = !set && (cpu.registers.p.bits() & flag.bits()) == 0;
 
-        let mut cycles = opcode.cycles;
         if branch_set || branch_clr {
-            // Add +1 cycle for branch, +2 if branching to differnt page
-            cycles += match (addr as u16) & 0xFF00 != cpu.registers.pc & 0xFF00 {
-                true => 2,
-                false => 1
-            };
+            cpu.read(cpu.registers.pc as usize); // Dummy read if branch
+
+            // And do another dummy read of the unfixed eff. addr if page cross
+            if pgx {
+                let lsb = cpu.registers.pc as u8;
+                let msb = (cpu.registers.pc & 0xFF00) as usize;
+                cpu.read(msb | lsb.wrapping_add(operands[0]) as usize);
+            }
+
             cpu.registers.pc = addr as u16;
         }
 
-        cycles
+        opcode.cycles
     }
     pub (super) fn bmi(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
         branch(cpu, opcode, operands, StatusFlags::N, true)
