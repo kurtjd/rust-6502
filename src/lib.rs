@@ -11,7 +11,7 @@ const INTR_VECTOR: usize = 0xFFFE;
 pub struct Cycle {
     pub address: usize,
     pub value: u8,
-    pub read: bool
+    pub ctype: String
 }
 
 struct Opcode {
@@ -346,7 +346,7 @@ impl Cpu6502 {
         self.cycles.push(Cycle {
             address,
             value,
-            read: true
+            ctype: "read".to_string()
         });
 
         value
@@ -357,7 +357,7 @@ impl Cpu6502 {
         self.cycles.push(Cycle {
             address,
             value,
-            read: false
+            ctype: "write".to_string()
         })
     }
 

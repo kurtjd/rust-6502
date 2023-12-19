@@ -84,7 +84,7 @@ fn opcode_test(path: &PathBuf) {
         for (cpu_cycle, test_cycle) in cpu.cycles.iter().zip(t.cycles.iter()) {
             assert_eq!(cpu_cycle.address, test_cycle.address, "{}", t.name);
             assert_eq!(cpu_cycle.value, test_cycle.value);
-            assert!((cpu_cycle.read && test_cycle.ctype == "read") || (!cpu_cycle.read && test_cycle.ctype == "write"));
+            assert_eq!(cpu_cycle.ctype, test_cycle.ctype);
         }
     }
 }
