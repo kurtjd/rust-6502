@@ -13,7 +13,7 @@ struct TestRam {
 
 #[derive(Deserialize)]
 struct TestCycles {
-    address: u16,
+    address: usize,
     value: u8,
     ctype: String
 }
@@ -50,6 +50,7 @@ fn opcode_test(path: &PathBuf) {
 
     for t in &tests {
         // Set the initial state of the CPU
+        cpu.clear_cycles();
         cpu.registers.pc = t.initial_state.pc;
         cpu.registers.s = t.initial_state.s;
         cpu.registers.a = t.initial_state.a;
@@ -78,7 +79,13 @@ fn opcode_test(path: &PathBuf) {
             assert_eq!(cpu.ram[m.address as usize], m.value, "Test ({}): Incorrect RAM @ {}!", t.name, m.address);
         }
 
-        // TODO: Check cycles
+        // Check cycles
+        assert_eq!(cpu.cycles.len(), t.cycles.len());
+        for (cpu_cycle, test_cycle) in cpu.cycles.iter().zip(t.cycles.iter()) {
+            assert_eq!(cpu_cycle.address, test_cycle.address, "{}", t.name);
+            assert_eq!(cpu_cycle.value, test_cycle.value);
+            assert!((cpu_cycle.read && test_cycle.ctype == "read") || (!cpu_cycle.read && test_cycle.ctype == "write"));
+        }
     }
 }
 

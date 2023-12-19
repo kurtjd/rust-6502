@@ -1,6 +1,5 @@
 /tests/test_cases
 /target
 /Cargo.lock
-results.txt
 test_opcode
 test_instr
