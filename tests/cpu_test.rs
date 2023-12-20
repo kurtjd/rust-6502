@@ -45,7 +45,7 @@ fn parse_test(path: &PathBuf) -> Vec<Test> {
 }
 
 fn opcode_test(path: &PathBuf) {
-    let mut cpu = Cpu6502::new();
+    let mut cpu = Cpu6502::new(0x10000);
     let tests = parse_test(path);
 
     for t in &tests {

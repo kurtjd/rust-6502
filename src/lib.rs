@@ -337,6 +337,7 @@ pub struct Cpu6502 {
     pub registers: Registers,
     pub ram: [u8; MEM_SIZE],
     pub cycles: Vec<Cycle>,
+    pub rom_start: usize,
     halted: bool
 }
 
@@ -353,7 +354,7 @@ impl Cpu6502 {
     }
 
     fn write(&mut self, address: usize, value: u8) {
-        if address < 0xD000 {
+        if address < self.rom_start {
             self.ram[address] = value;
         }
 
@@ -374,7 +375,7 @@ impl Cpu6502 {
         }
     }
 
-    pub fn new() -> Self {
+    pub fn new(rom_start: usize) -> Self {
         Cpu6502 {
             registers: Registers {
                 pc: 0,
@@ -387,6 +388,7 @@ impl Cpu6502 {
 
             ram: [0; MEM_SIZE],
             cycles: Vec::new(),
+            rom_start,
             halted: false
         }
     }
