@@ -45,12 +45,11 @@ fn parse_test(path: &PathBuf) -> Vec<Test> {
 }
 
 fn opcode_test(path: &PathBuf) {
-    let mut cpu = Cpu6502::new(0x10000);
+    let mut cpu = Cpu6502::new(0x10000); // No ROM in tests, so ROM start is 1 past address space
     let tests = parse_test(path);
 
     for t in &tests {
         // Set the initial state of the CPU
-        cpu.clear_cycles();
         cpu.registers.pc = t.initial_state.pc;
         cpu.registers.s = t.initial_state.s;
         cpu.registers.a = t.initial_state.a;

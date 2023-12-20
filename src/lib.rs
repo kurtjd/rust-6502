@@ -15,300 +15,299 @@ pub struct Cycle {
 }
 
 struct Opcode {
-    instr: fn(&mut Cpu6502, &Opcode, &[u8]) -> u8,
+    instr: fn(&mut Cpu6502, &Opcode, &[u8]),
     mode: AddrMode,
-    bytes: u8,
-    cycles: u8
+    bytes: u8
 }
 
 static OPCODES: [Opcode; 0x100] = [
     // $00-$0F
-    Opcode { instr: instructions::brk, mode: AddrMode::IMP0, bytes: 2, cycles: 7 },
-    Opcode { instr: instructions::ora, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::slo, mode: AddrMode::INDX, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::ora, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::asl, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::slo, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::php, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::ora, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::asl, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::anc, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::ora, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::asl, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
-    Opcode { instr: instructions::slo, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
+    Opcode { instr: instructions::brk, mode: AddrMode::IMP0, bytes: 2 },
+    Opcode { instr: instructions::ora, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::slo, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::ora, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::asl, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::slo, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::php, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::ora, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::asl, mode: AddrMode::ACM0, bytes: 1 },
+    Opcode { instr: instructions::anc, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::ora, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::asl, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::slo, mode: AddrMode::ABS0, bytes: 3 },
 
     // $10 - $1F
-    Opcode { instr: instructions::bpl, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::ora, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::slo, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::ora, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::asl, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::slo, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::clc, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::ora, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::slo, mode: AddrMode::ABSY, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::ora, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::asl, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::slo, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
+    Opcode { instr: instructions::bpl, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::ora, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::slo, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::ora, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::asl, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::slo, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::clc, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::ora, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::slo, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::ora, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::asl, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::slo, mode: AddrMode::ABSX, bytes: 3 },
 
     // $20 - $2F
-    Opcode { instr: instructions::jsr, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
-    Opcode { instr: instructions::and, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::rla, mode: AddrMode::INDX, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::bit, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::and, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::rol, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::rla, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::plp, mode: AddrMode::IMP0, bytes: 1, cycles: 4 },
-    Opcode { instr: instructions::and, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::rol, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::anc, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::bit, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::and, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::rol, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
-    Opcode { instr: instructions::rla, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
+    Opcode { instr: instructions::jsr, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::and, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::rla, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::bit, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::and, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::rol, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::rla, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::plp, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::and, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::rol, mode: AddrMode::ACM0, bytes: 1 },
+    Opcode { instr: instructions::anc, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::bit, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::and, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::rol, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::rla, mode: AddrMode::ABS0, bytes: 3 },
 
     // $30 - $3F
-    Opcode { instr: instructions::bmi, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::and, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::rla, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::and, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::rol, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::rla, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::sec, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::and, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::rla, mode: AddrMode::ABSY, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::and, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::rol, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::rla, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
+    Opcode { instr: instructions::bmi, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::and, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::rla, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::and, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::rol, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::rla, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::sec, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::and, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::rla, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::and, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::rol, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::rla, mode: AddrMode::ABSX, bytes: 3 },
 
     // $40 - $4F
-    Opcode { instr: instructions::rti, mode: AddrMode::IMP0, bytes: 1, cycles: 6 },
-    Opcode { instr: instructions::eor, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::sre, mode: AddrMode::INDX, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::eor, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::lsr, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::sre, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::pha, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::eor, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::lsr, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::alr, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::jmp, mode: AddrMode::ABS0, bytes: 3, cycles: 3 },
-    Opcode { instr: instructions::eor, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::lsr, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
-    Opcode { instr: instructions::sre, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
+    Opcode { instr: instructions::rti, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::eor, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sre, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::eor, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::lsr, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::sre, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::pha, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::eor, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::lsr, mode: AddrMode::ACM0, bytes: 1 },
+    Opcode { instr: instructions::alr, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::jmp, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::eor, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::lsr, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::sre, mode: AddrMode::ABS0, bytes: 3 },
     
     // $50 - $5F
-    Opcode { instr: instructions::bvc, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::eor, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::sre, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::eor, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::lsr, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::sre, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::cli, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::eor, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::sre, mode: AddrMode::ABSY, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::eor, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::lsr, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::sre, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
+    Opcode { instr: instructions::bvc, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::eor, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sre, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::eor, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::lsr, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::sre, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::cli, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::eor, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sre, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::eor, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::lsr, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::sre, mode: AddrMode::ABSX, bytes: 3 },
 
     // $60 - $6F
-    Opcode { instr: instructions::rts, mode: AddrMode::IMP0, bytes: 1, cycles: 6 },
-    Opcode { instr: instructions::adc, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::rra, mode: AddrMode::INDX, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::adc, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::ror, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::rra, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::pla, mode: AddrMode::IMP0, bytes: 1, cycles: 4 },
-    Opcode { instr: instructions::adc, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::ror, mode: AddrMode::ACM0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::arr, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::jmp, mode: AddrMode::IND0, bytes: 3, cycles: 5 },
-    Opcode { instr: instructions::adc, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::ror, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
-    Opcode { instr: instructions::rra, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
+    Opcode { instr: instructions::rts, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::adc, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::rra, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::adc, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::ror, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::rra, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::pla, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::adc, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::ror, mode: AddrMode::ACM0, bytes: 1 },
+    Opcode { instr: instructions::arr, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::jmp, mode: AddrMode::IND0, bytes: 3 },
+    Opcode { instr: instructions::adc, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::ror, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::rra, mode: AddrMode::ABS0, bytes: 3 },
 
     // $70 - $7F
-    Opcode { instr: instructions::bvs, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::adc, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::rra, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::adc, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::ror, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::rra, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::sei, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::adc, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::rra, mode: AddrMode::ABSY, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::adc, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::ror, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::rra, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
+    Opcode { instr: instructions::bvs, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::adc, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::rra, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::adc, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::ror, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::rra, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::sei, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::adc, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::rra, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::adc, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::ror, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::rra, mode: AddrMode::ABSX, bytes: 3 },
 
     // $80 - $8F
-    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::sta, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::sax, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::sty, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::sta, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::stx, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::sax, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::dey, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::txa, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::ane, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::sty, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::sta, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::stx, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::sax, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::sta, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::sax, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::sty, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::sta, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::stx, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::sax, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::dey, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::txa, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::ane, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::sty, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::sta, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::stx, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::sax, mode: AddrMode::ABS0, bytes: 3 },
 
     // $90 - $9F
-    Opcode { instr: instructions::bcc, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::sta, mode: AddrMode::INDY, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::sha, mode: AddrMode::INDY, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::sty, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::sta, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::stx, mode: AddrMode::ZPGY, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::sax, mode: AddrMode::ZPGY, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::tya, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::sta, mode: AddrMode::ABSY, bytes: 3, cycles: 5 },
-    Opcode { instr: instructions::txs, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::tas, mode: AddrMode::ABSY, bytes: 3, cycles: 5 },
-    Opcode { instr: instructions::shy, mode: AddrMode::ABSX, bytes: 3, cycles: 5 },
-    Opcode { instr: instructions::sta, mode: AddrMode::ABSX, bytes: 3, cycles: 5 },
-    Opcode { instr: instructions::shx, mode: AddrMode::ABSY, bytes: 3, cycles: 5 },
-    Opcode { instr: instructions::sha, mode: AddrMode::ABSY, bytes: 3, cycles: 5 },
+    Opcode { instr: instructions::bcc, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::sta, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sha, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::sty, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::sta, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::stx, mode: AddrMode::ZPGY, bytes: 2 },
+    Opcode { instr: instructions::sax, mode: AddrMode::ZPGY, bytes: 2 },
+    Opcode { instr: instructions::tya, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sta, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::txs, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::tas, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::shy, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::sta, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::shx, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::sha, mode: AddrMode::ABSY, bytes: 3 },
 
     // $A0 - $AF
-    Opcode { instr: instructions::ldy, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::lda, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::ldx, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::lax, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::ldy, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::lda, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::ldx, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::lax, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::tay, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::lda, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::tax, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::lxa, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::ldy, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::lda, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::ldx, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::lax, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
+    Opcode { instr: instructions::ldy, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::lda, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::ldx, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::lax, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::ldy, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::lda, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::ldx, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::lax, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::tay, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::lda, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::tax, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::lxa, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::ldy, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::lda, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::ldx, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::lax, mode: AddrMode::ABS0, bytes: 3 },
 
     // $B0 - $BF
-    Opcode { instr: instructions::bcs, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::lda, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::lax, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::ldy, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::lda, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::ldx, mode: AddrMode::ZPGY, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::lax, mode: AddrMode::ZPGY, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::clv, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::lda, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::tsx, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::las, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::ldy, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::lda, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::ldx, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::lax, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
+    Opcode { instr: instructions::bcs, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::lda, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::lax, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::ldy, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::lda, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::ldx, mode: AddrMode::ZPGY, bytes: 2 },
+    Opcode { instr: instructions::lax, mode: AddrMode::ZPGY, bytes: 2 },
+    Opcode { instr: instructions::clv, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::lda, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::tsx, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::las, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::ldy, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::lda, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::ldx, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::lax, mode: AddrMode::ABSY, bytes: 3 },
 
     // $C0 - $CF
-    Opcode { instr: instructions::cpy, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::dcp, mode: AddrMode::INDX, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::cpy, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::dec, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::dcp, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::iny, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::dex, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::sbx, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::cpy, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::dec, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
-    Opcode { instr: instructions::dcp, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
+    Opcode { instr: instructions::cpy, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::dcp, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::cpy, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::dec, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::dcp, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::iny, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::dex, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sbx, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::cpy, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::dec, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::dcp, mode: AddrMode::ABS0, bytes: 3 },
 
     // $D0 - $DF
-    Opcode { instr: instructions::bne, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::dcp, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::dec, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::dcp, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::cld, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::dcp, mode: AddrMode::ABSY, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::cmp, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::dec, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::dcp, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
+    Opcode { instr: instructions::bne, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::dcp, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::dec, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::dcp, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::cld, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::dcp, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::cmp, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::dec, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::dcp, mode: AddrMode::ABSX, bytes: 3 },
 
     // $E0 - $EF
-    Opcode { instr: instructions::cpx, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::INDX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::isc, mode: AddrMode::INDX, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::cpx, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::ZPG0, bytes: 2, cycles: 3 },
-    Opcode { instr: instructions::inc, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::isc, mode: AddrMode::ZPG0, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::inx, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::usb, mode: AddrMode::IMM0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::cpx, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::ABS0, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::inc, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
-    Opcode { instr: instructions::isc, mode: AddrMode::ABS0, bytes: 3, cycles: 6 },
+    Opcode { instr: instructions::cpx, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::isc, mode: AddrMode::INDX, bytes: 2 },
+    Opcode { instr: instructions::cpx, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::inc, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::isc, mode: AddrMode::ZPG0, bytes: 2 },
+    Opcode { instr: instructions::inx, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::usb, mode: AddrMode::IMM0, bytes: 2 },
+    Opcode { instr: instructions::cpx, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::inc, mode: AddrMode::ABS0, bytes: 3 },
+    Opcode { instr: instructions::isc, mode: AddrMode::ABS0, bytes: 3 },
 
     // $F0 - $FF
-    Opcode { instr: instructions::beq, mode: AddrMode::REL0, bytes: 2, cycles: 2 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::INDY, bytes: 2, cycles: 5 },
-    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1, cycles: 3 },
-    Opcode { instr: instructions::isc, mode: AddrMode::INDY, bytes: 2, cycles: 8 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::ZPGX, bytes: 2, cycles: 4 },
-    Opcode { instr: instructions::inc, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::isc, mode: AddrMode::ZPGX, bytes: 2, cycles: 6 },
-    Opcode { instr: instructions::sed, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::ABSY, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1, cycles: 2 },
-    Opcode { instr: instructions::isc, mode: AddrMode::ABSY, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::sbc, mode: AddrMode::ABSX, bytes: 3, cycles: 4 },
-    Opcode { instr: instructions::inc, mode: AddrMode::ABSX, bytes: 3, cycles: 7 },
-    Opcode { instr: instructions::isc, mode: AddrMode::ABSX, bytes: 3, cycles: 7 }
+    Opcode { instr: instructions::beq, mode: AddrMode::REL0, bytes: 2 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::jam, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::isc, mode: AddrMode::INDY, bytes: 2 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::inc, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::isc, mode: AddrMode::ZPGX, bytes: 2 },
+    Opcode { instr: instructions::sed, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::IMP0, bytes: 1 },
+    Opcode { instr: instructions::isc, mode: AddrMode::ABSY, bytes: 3 },
+    Opcode { instr: instructions::nop, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::sbc, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::inc, mode: AddrMode::ABSX, bytes: 3 },
+    Opcode { instr: instructions::isc, mode: AddrMode::ABSX, bytes: 3 }
 ];
 
 bitflags! {
@@ -344,6 +343,7 @@ pub struct Cpu6502 {
 impl Cpu6502 {
     fn read(&mut self, address: usize) -> u8 {
         let value = self.ram[address];
+
         self.cycles.push(Cycle {
             address,
             value,
@@ -405,14 +405,13 @@ impl Cpu6502 {
         self.halted = false;
     }
 
-    pub fn clear_cycles(&mut self) {
-        self.cycles.clear();
-    }
+
 
     pub fn tick(&mut self) -> u8 {
+        self.cycles.clear();
+
         if self.halted { return 0 } // Do nothing if halted, typically after encountering a 'jam'
 
-        // let fetch = self.ram[self.registers.pc as usize] as usize;
         let fetch = self.read(self.registers.pc as usize) as usize;
         let opcode = &OPCODES[fetch];
 
@@ -427,7 +426,8 @@ impl Cpu6502 {
         }
         
         self.registers.pc = self.registers.pc.wrapping_add(opcode.bytes as u16);
-        (opcode.instr)(self, opcode, &operands)
+        (opcode.instr)(self, opcode, &operands);
+        self.cycles.len() as u8
     }
 }
 
@@ -505,7 +505,7 @@ pub mod instructions {
                 let eff_addr = addr.wrapping_add(cpu.registers.y as u16);
                 (eff_addr as usize, cpu.ram[eff_addr as usize], (eff_addr & 0xFF00) != (addr & 0xFF00))
             },
-            AddrMode::REL0 => { // Cycles are gross, come back to this
+            AddrMode::REL0 => {
                 let addr = cpu.registers.pc as i32;
                 let offset = (operands[0] as i8) as i32;
                 let eff_addr = ((addr + offset) as u16) as usize;
@@ -560,130 +560,111 @@ pub mod instructions {
     }
 
     // Load/Store Operations
-    pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         cpu.registers.a = cpu.cond_read(addr, value, pgx, &opcode.mode);
 
         update_zn_flags(cpu, value);
-        opcode.cycles
     }
-    pub (super) fn ldx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn ldx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         cpu.registers.x = cpu.cond_read(addr, value, pgx, &opcode.mode);
 
         update_zn_flags(cpu, value);
-        opcode.cycles
     }
-    pub (super) fn ldy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn ldy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         cpu.registers.y = cpu.cond_read(addr, value, pgx, &opcode.mode);
 
         update_zn_flags(cpu, value);
-        opcode.cycles
     }
 
-    pub (super) fn sta(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sta(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
         cpu.write(addr, cpu.registers.a);
-        opcode.cycles
     }
-    pub (super) fn stx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn stx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
         cpu.write(addr, cpu.registers.x);
-        opcode.cycles
     }
-    pub (super) fn sty(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sty(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
         cpu.write(addr, cpu.registers.y);
-        opcode.cycles
     }
 
     // Register Transfers
-    pub (super) fn tax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn tax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         update_zn_flags(cpu, cpu.registers.a);
         cpu.registers.x = cpu.registers.a;
-        opcode.cycles
     }
-    pub (super) fn tay(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn tay(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         update_zn_flags(cpu, cpu.registers.a);
         cpu.registers.y = cpu.registers.a;
-        opcode.cycles
     }
-    pub (super) fn txa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn txa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         update_zn_flags(cpu, cpu.registers.x);
         cpu.registers.a = cpu.registers.x;
-        opcode.cycles
     }
-    pub (super) fn tya(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn tya(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         update_zn_flags(cpu, cpu.registers.y);
         cpu.registers.a = cpu.registers.y;
-        opcode.cycles
     }
 
     // Stack Operations
-    pub (super) fn tsx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn tsx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         update_zn_flags(cpu, cpu.registers.s);
         cpu.registers.x = cpu.registers.s;
-        opcode.cycles
     }
-    pub (super) fn txs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn txs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.s = cpu.registers.x;
-        opcode.cycles
     }
-    pub (super) fn pha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn pha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         stack_push(cpu, cpu.registers.a);
-        opcode.cycles
     }
-    pub (super) fn php(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn php(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let psw = StatusFlags::from_bits(cpu.registers.p.bits()).unwrap() | StatusFlags::B;
         stack_push(cpu, psw.bits());
-        opcode.cycles
     }
-    pub (super) fn pla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn pla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.read(STACK_OFFSET + cpu.registers.s as usize); // Dummy read
         cpu.registers.a = stack_pop(cpu);
         update_zn_flags(cpu, cpu.registers.a);
-        opcode.cycles
     }
-    pub (super) fn plp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn plp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.read(STACK_OFFSET + cpu.registers.s as usize); // Dummy read
         let result = stack_pop(cpu);
         
         // We should ignore the Break and Extension flags from the pop
         cpu.registers.p &= StatusFlags::B | StatusFlags::E;
         cpu.registers.p |= StatusFlags::from_bits(result).unwrap() & !(StatusFlags::B | StatusFlags::E);
-        opcode.cycles
     }
 
     // Logical Operations
-    pub (super) fn and(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn and(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         cpu.registers.a &= cpu.cond_read(addr, value, pgx, &opcode.mode);
 
         update_zn_flags(cpu, cpu.registers.a);
-        opcode.cycles
     }
-    pub (super) fn eor(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn eor(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         cpu.registers.a ^= cpu.cond_read(addr, value, pgx, &opcode.mode);
 
         update_zn_flags(cpu, cpu.registers.a);
-        opcode.cycles
     }
-    pub (super) fn ora(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn ora(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         cpu.registers.a |= cpu.cond_read(addr, value, pgx, &opcode.mode);
 
         update_zn_flags(cpu, cpu.registers.a);
-        opcode.cycles
     }
-    pub (super) fn bit(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn bit(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, value, _) = get_mem(cpu, &opcode.mode, operands);
         let result = cpu.registers.a & cpu.read(addr);
         update_zn_flags(cpu, result);
@@ -692,11 +673,10 @@ pub mod instructions {
         cpu.registers.p &= !(StatusFlags::V | StatusFlags::N);
         let m = StatusFlags::from_bits(value).unwrap() & (StatusFlags::V | StatusFlags::N);
         cpu.registers.p |= m;
-        opcode.cycles
     }
 
     // Arithmetic Operations
-    fn compare(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+    fn compare(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) {
         let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
         let reg = match reg {
             'a' => cpu.registers.a,
@@ -714,10 +694,8 @@ pub mod instructions {
         if reg >= value {
             cpu.registers.p |= StatusFlags::C;
         }
-
-        opcode.cycles
     }
-    pub (super) fn adc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn adc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         value = cpu.cond_read(addr, value, pgx, &opcode.mode);
@@ -779,9 +757,8 @@ pub mod instructions {
         }
 
         cpu.registers.a = sum as u8;
-        opcode.cycles
     }
-    pub (super) fn sbc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sbc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         value = cpu.cond_read(addr, value, pgx, &opcode.mode);
@@ -839,60 +816,53 @@ pub mod instructions {
         }
 
         cpu.registers.a = sum;
-        opcode.cycles
     }
-    pub (super) fn cmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        compare(cpu, opcode, operands, 'a') 
+    pub (super) fn cmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        compare(cpu, opcode, operands, 'a');
     }
-    pub (super) fn cpx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        compare(cpu, opcode, operands, 'x') 
+    pub (super) fn cpx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        compare(cpu, opcode, operands, 'x');
     }
-    pub (super) fn cpy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        compare(cpu, opcode, operands, 'y') 
+    pub (super) fn cpy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        compare(cpu, opcode, operands, 'y');
     }
 
     // Inc/Dec Operations
-    pub (super) fn inc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn inc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
         let mut value = cpu.read(addr);
         cpu.write(addr, value); // Dummy write
         value = value.wrapping_add(1);
         update_zn_flags(cpu, value);
         cpu.write(addr, value);
-        opcode.cycles
     }
-    pub (super) fn inx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn inx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.x = cpu.registers.x.wrapping_add(1);
         update_zn_flags(cpu, cpu.registers.x);
-        opcode.cycles
     }
-    pub (super) fn iny(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn iny(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.y = cpu.registers.y.wrapping_add(1);
         update_zn_flags(cpu, cpu.registers.y);
-        opcode.cycles
     }
-    pub (super) fn dec(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn dec(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
         let mut value = cpu.read(addr);
         cpu.write(addr, value);
         value = value.wrapping_sub(1);
         update_zn_flags(cpu, value);
         cpu.write(addr, value);
-        opcode.cycles
     }
-    pub (super) fn dex(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn dex(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.x = cpu.registers.x.wrapping_sub(1);
         update_zn_flags(cpu, cpu.registers.x);
-        opcode.cycles
     }
-    pub (super) fn dey(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn dey(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.y = cpu.registers.y.wrapping_sub(1);
         update_zn_flags(cpu, cpu.registers.y);
-        opcode.cycles
     }
 
     // Shift Operations
-    pub (super) fn asl(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn asl(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         value = match opcode.mode {
@@ -913,10 +883,8 @@ pub mod instructions {
             AddrMode::ACM0 => cpu.registers.a = value,
             _ => cpu.write(addr, value)
         }
-
-        opcode.cycles
     }
-    pub (super) fn lsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn lsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
 
         value = match opcode.mode {
@@ -937,10 +905,8 @@ pub mod instructions {
             AddrMode::ACM0 => cpu.registers.a = value,
             _ => cpu.write(addr, value)
         }
-
-        opcode.cycles
     }
-    pub (super) fn rol(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn rol(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
 
         value = match opcode.mode {
@@ -965,9 +931,8 @@ pub mod instructions {
         }
 
         update_zn_flags(cpu, value);
-        opcode.cycles
     }
-    pub (super) fn ror(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn ror(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
 
         value = match opcode.mode {
@@ -992,16 +957,14 @@ pub mod instructions {
         }
 
         update_zn_flags(cpu, value);
-        opcode.cycles
     }
 
     // Jump/Call Operations
-    pub (super) fn jmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn jmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
         cpu.registers.pc = addr as u16;
-        opcode.cycles
     }
-    pub (super) fn jsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn jsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         /* Because jsr can overwrite its operands during operation, we have to emulate individual
         cycles. That's the reason for this hackish way of doing things. */
         cpu.cycles.pop();
@@ -1025,18 +988,15 @@ pub mod instructions {
         //let adh: u16 = cpu.ram[cpu.registers.pc as usize] as u16;
         let adh: u16 = cpu.read(cpu.registers.pc as usize) as u16;
         cpu.registers.pc = (adh << 8) | adl;
-
-        opcode.cycles
     }
-    pub (super) fn rts(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn rts(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.read(STACK_OFFSET + cpu.registers.s as usize); // Dummy read
         cpu.registers.pc = stack_pop16(cpu) + 1;
         cpu.read((cpu.registers.pc - 1) as usize); // Another dummy read
-        opcode.cycles
     }
 
     // Branch Operations
-    fn branch(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], flag: StatusFlags, set: bool) -> u8 {
+    fn branch(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], flag: StatusFlags, set: bool) {
         let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         // Rust cmon why... I just want to pass in a damn bit flag and you make me do this??
@@ -1055,66 +1015,57 @@ pub mod instructions {
 
             cpu.registers.pc = addr as u16;
         }
-
-        opcode.cycles
     }
-    pub (super) fn bmi(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::N, true)
+    pub (super) fn bmi(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::N, true);
     }
-    pub (super) fn bpl(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::N, false)
+    pub (super) fn bpl(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::N, false);
     }
-    pub (super) fn bvs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::V, true)
+    pub (super) fn bvs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::V, true);
     }
-    pub (super) fn bvc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::V, false)
+    pub (super) fn bvc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::V, false);
     }
-    pub (super) fn beq(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::Z, true)
+    pub (super) fn beq(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::Z, true);
     }
-    pub (super) fn bne(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::Z, false)
+    pub (super) fn bne(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::Z, false);
     }
-    pub (super) fn bcs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::C, true)
+    pub (super) fn bcs(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::C, true);
     }
-    pub (super) fn bcc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        branch(cpu, opcode, operands, StatusFlags::C, false)
+    pub (super) fn bcc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        branch(cpu, opcode, operands, StatusFlags::C, false);
     }
 
     // Status Flag Operations
-    pub (super) fn clc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn clc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.p &= !StatusFlags::C;
-        opcode.cycles
     }
-    pub (super) fn cld(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn cld(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.p &= !StatusFlags::D;
-        opcode.cycles
     }
-    pub (super) fn cli(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn cli(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.p &= !StatusFlags::I;
-        opcode.cycles
     }
-    pub (super) fn clv(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn clv(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.p &= !StatusFlags::V;
-        opcode.cycles
     }
-    pub (super) fn sec(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sec(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.p |= StatusFlags::C;
-        opcode.cycles
     }
-    pub (super) fn sed(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sed(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.p |= StatusFlags::D;
-        opcode.cycles
     }
-    pub (super) fn sei(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sei(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.p |= StatusFlags::I;
-        opcode.cycles
     }
 
     // System Operations
-    pub (super) fn brk(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn brk(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         // Push PC to stack
         stack_push16(cpu, cpu.registers.pc); 
 
@@ -1127,57 +1078,48 @@ pub mod instructions {
 
         // Set Interrupt Disable flag
         cpu.registers.p |= StatusFlags::I;
-        opcode.cycles
     }
-    pub (super) fn nop(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn nop(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         // Intentionally do nothing
-        opcode.cycles
     }
-    pub (super) fn rti(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn rti(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         // Pop status reg
         plp(cpu, opcode, operands);
 
         // Pop PC
         cpu.registers.pc = stack_pop16(cpu);
-        opcode.cycles
     }
 
     // Illegal/Undefined Operations (TODO: Cycle counts will need some work)
-    pub (super) fn jam(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn jam(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.pc = cpu.registers.pc.wrapping_sub(opcode.bytes as u16);
         cpu.halted = true;
-        opcode.cycles
     }
-    pub (super) fn slo(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn slo(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         asl(cpu, opcode, operands);
         ora(cpu, opcode, operands);
-        opcode.cycles
     }
-    pub (super) fn anc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn anc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         and(cpu, opcode, operands);
         if cpu.registers.a & (1 << 7) != 0 {
             cpu.registers.p |= StatusFlags::C;
         } else {
             cpu.registers.p &= !StatusFlags::C;
         }
-        opcode.cycles
     }
-    pub (super) fn rla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn rla(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         rol(cpu, opcode, operands);
         and(cpu, opcode, operands);
-        opcode.cycles
     }
-    pub (super) fn sre(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sre(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         lsr(cpu, opcode, operands);
         eor(cpu, opcode, operands);
-        opcode.cycles
     }
-    pub (super) fn alr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn alr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         and(cpu, opcode, operands);
         lsr(cpu, &OPCODES[0x4A], operands); // Always perform lsr on accumulator (opcode $4A)
-        opcode.cycles
     }
-    pub (super) fn arr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn arr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         and(cpu, opcode, operands);
         let and_res = cpu.registers.a;
         ror(cpu, &OPCODES[0x6A], operands); // Always perform ror on accumulator (opcode $6A)
@@ -1214,20 +1156,16 @@ pub mod instructions {
         } else {
             cpu.registers.p &= !StatusFlags::V;
         }
-
-        opcode.cycles
     }
-    pub (super) fn rra(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn rra(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         ror(cpu, opcode, operands);
         adc(cpu, opcode, operands);
-        opcode.cycles
     }
-    pub (super) fn sax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
         cpu.ram[addr] = cpu.registers.a & cpu.registers.x;
-        opcode.cycles
     }
-    pub (super) fn ane(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn ane(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         /* This is a highly unstable operation with non-deterministic behavior in reality.
         Things like temperature can affect the value of this 'magic' constant! However, 0xEE
         seems to be the most common result for 'magic' and is the constant used in
@@ -1236,10 +1174,8 @@ pub mod instructions {
 
         cpu.registers.a = (cpu.registers.a | magic) & cpu.registers.x;
         and(cpu, opcode, operands);
-
-        opcode.cycles
     }
-    fn shr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) -> u8 {
+    fn shr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) {
         let (mut addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
 
         let mut result = match reg {
@@ -1261,37 +1197,33 @@ pub mod instructions {
         }
 
         cpu.ram[addr] = result;
-        opcode.cycles
     }
-    pub (super) fn sha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        shr(cpu, opcode, operands, 'a')
+    pub (super) fn sha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        shr(cpu, opcode, operands, 'a');
     }
-    pub (super) fn shx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        shr(cpu, opcode, operands, 'x')
+    pub (super) fn shx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        shr(cpu, opcode, operands, 'x');
     }
-    pub (super) fn shy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
-        shr(cpu, opcode, operands, 'y')
+    pub (super) fn shy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
+        shr(cpu, opcode, operands, 'y');
     }
-    pub (super) fn tas(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn tas(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         cpu.registers.s = cpu.registers.a & cpu.registers.x;
         sha(cpu, opcode, operands);
-        opcode.cycles
     }
-    pub (super) fn lax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn lax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         lda(cpu, opcode, operands);
         ldx(cpu, opcode, operands);
-        opcode.cycles
     }
-    pub (super) fn las(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn las(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
         let result = value & cpu.registers.s;
         update_zn_flags(cpu, result);
         cpu.registers.a = result;
         cpu.registers.x = result;
         cpu.registers.s = result;
-        opcode.cycles
     }
-    pub (super) fn lxa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn lxa(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         /* This is a highly unstable operation with non-deterministic behavior in reality.
         Things like temperature can affect the value of this 'magic' constant! However, 0xEE
         seems to be the most common result for 'magic' and is the constant used in
@@ -1301,10 +1233,8 @@ pub mod instructions {
         cpu.registers.a |= magic;
         and(cpu, opcode, operands);
         cpu.registers.x = cpu.registers.a;
-
-        opcode.cycles
     }
-    pub (super) fn dcp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn dcp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
         dec(cpu, opcode, operands);
 
@@ -1313,9 +1243,8 @@ pub mod instructions {
         for addressing. Thus we cache the address before calling dec and call cmp
         immediate directly with the value in RAM at that address. */
         cmp(cpu, &OPCODES[0xC9], &[cpu.ram[addr]]);
-        opcode.cycles
     }
-    pub (super) fn sbx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn sbx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let reg = cpu.registers.a & cpu.registers.x;
         cpu.registers.x = reg.wrapping_sub(operands[0]);
         
@@ -1326,15 +1255,12 @@ pub mod instructions {
         } else {
             cpu.registers.p &= !StatusFlags::C;
         }
-        opcode.cycles
     }
-    pub (super) fn isc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn isc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         inc(cpu, opcode, operands);
         sbc(cpu, opcode, operands);
-        opcode.cycles
     }
-    pub (super) fn usb(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) -> u8 {
+    pub (super) fn usb(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         sbc(cpu, opcode, operands);
-        opcode.cycles
     }
 }
