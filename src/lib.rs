@@ -353,7 +353,7 @@ impl Cpu6502 {
     }
 
     fn write(&mut self, address: usize, value: u8) {
-        if address < 0xC000 {
+        if address < 0xD000 {
             self.ram[address] = value;
         }
 
