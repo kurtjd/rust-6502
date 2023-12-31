@@ -1,18 +1,13 @@
-#![allow(dead_code)]
 #![allow(unused_variables)]
 
 use bitflags::bitflags;
 
-const MEM_SIZE: usize = 0x10000;
+type MemReadCallback<'a> = Box<dyn FnMut(usize) -> u8 + 'a>;
+type MemWriteCallback<'a> = Box<dyn FnMut(usize, u8) + 'a>;
+
 const STACK_OFFSET: usize = 0x0100;
 const RESET_VECTOR: usize = 0xFFFC;
 const INTR_VECTOR: usize = 0xFFFE;
-
-pub struct Cycle {
-    pub address: usize,
-    pub value: u8,
-    pub ctype: String
-}
 
 struct Opcode {
     instr: fn(&mut Cpu6502, &Opcode, &[u8]),
@@ -332,50 +327,37 @@ pub struct Registers {
     pub p: StatusFlags  // Status
 }
 
-pub struct Cpu6502 {
+pub struct Cpu6502<'a> {
     pub registers: Registers,
-    pub ram: [u8; MEM_SIZE],
-    pub cycles: Vec<Cycle>,
-    pub rom_start: usize,
+    mem_read: MemReadCallback<'a>,
+    mem_write: MemWriteCallback<'a>,
+    cycles: u8,
     halted: bool
 }
 
-impl Cpu6502 {
-    fn read(&mut self, address: usize) -> u8 {
-        let value = self.ram[address];
+impl <'a>Cpu6502<'a> {
+    /* The cpu requires external memory management. It takes as arguments callbacks to memory read
+    and memory write functions in the form of closures. Using the CPU would look like:
+    
+    // The memory manager
+    let mem_man = Rc::new(RefCell::new(MemManager::new()));
 
-        self.cycles.push(Cycle {
-            address,
-            value,
-            ctype: "read".to_string()
-        });
+    // Create closures for memory manager's read/write methods
+    let mem_read = |address: usize| -> u8 {
+        mem_man.clone().borrow_mut().mem_read(address)
+    };
+    let mem_write = |address: usize, value: u8| {
+        mem_man.clone().borrow_mut().mem_write(address, value);
+    };
 
-        value
-    }
-
-    fn write(&mut self, address: usize, value: u8) {
-        if address < self.rom_start {
-            self.ram[address] = value;
-        }
-
-        self.cycles.push(Cycle {
-            address,
-            value,
-            ctype: "write".to_string()
-        })
-    }
-
-    fn cond_read(&mut self, address: usize, value: u8, pgx: bool, mode: &AddrMode) -> u8 {
-        match mode {
-            AddrMode::IMM0 | AddrMode::ABSX | AddrMode::ABSY | AddrMode::INDY => {
-                if pgx { self.read(address) } else { value }
-            },
-            AddrMode::ACM0 => value,
-            _ => self.read(address)
-        }
-    }
-
-    pub fn new(rom_start: usize) -> Self {
+    // Pass memory management closures to CPU
+    let mut cpu = Cpu6502::new(
+        Box::new(mem_read),
+        Box::new(mem_write)
+    );
+    
+     */
+    pub fn new(mem_read: MemReadCallback<'a>, mem_write: MemWriteCallback<'a>) -> Self {
         Cpu6502 {
             registers: Registers {
                 pc: 0,
@@ -386,17 +368,17 @@ impl Cpu6502 {
                 p: StatusFlags::empty()
             },
 
-            ram: [0; MEM_SIZE],
-            cycles: Vec::new(),
-            rom_start,
+            mem_read,
+            mem_write,
+            cycles: 0,
             halted: false
         }
     }
 
     pub fn reset(&mut self) {
         // Set the PC to point to address stored in reset vector
-        let lsb = self.ram[RESET_VECTOR];
-        let msb = self.ram[RESET_VECTOR + 1];
+        let lsb = self.read(RESET_VECTOR);
+        let msb = self.read(RESET_VECTOR + 1);
         self.registers.pc = (msb as u16) << 8 | (lsb as u16);
 
         // Disable interrupts flag and extension bit should be set
@@ -405,10 +387,8 @@ impl Cpu6502 {
         self.halted = false;
     }
 
-
-
     pub fn tick(&mut self) -> u8 {
-        self.cycles.clear();
+        self.cycles = 0;
 
         if self.halted { return 0 } // Do nothing if halted, typically after encountering a 'jam'
 
@@ -421,13 +401,29 @@ impl Cpu6502 {
             true => opcode.bytes - 1,
             false => 1 // Even for 1 byte opcodes, want to pull a dummy operand
         };
-        for i in 0..num_operands {
-            operands[i as usize] = self.read(self.registers.pc.wrapping_add(1 + i as u16) as usize);
+
+        // JSR ($20) is special so it gets to read its own operands thank you very much
+        if fetch != 0x20 {
+            for i in 0..num_operands {
+                operands[i as usize] = self.read(self.registers.pc.wrapping_add(1 + i as u16) as usize);
+            }
         }
-        
+
         self.registers.pc = self.registers.pc.wrapping_add(opcode.bytes as u16);
         (opcode.instr)(self, opcode, &operands);
-        self.cycles.len() as u8
+
+        self.cycles
+    }
+
+    fn read(&mut self, address: usize) -> u8 {
+        self.cycles += 1;
+        //self.mem_read.borrow_mut()(address)
+        (self.mem_read)(address)
+    }
+
+    fn write(&mut self, address: usize, value: u8) {
+        self.cycles += 1;
+        (self.mem_write)(address, value)
     }
 }
 
@@ -450,38 +446,67 @@ enum AddrMode {
 pub mod instructions {
     use super::*;
 
+    /* Needed a way to segregate direct access to memory from the CPU, though didn't
+    originally plan for that, so had to introduce this ugly hack :( */
+    fn check_read(cpu: &mut Cpu6502, addr: usize, no_read_val: u8, pgx: bool, to_read: bool, cond_read: bool) -> u8 {
+        match to_read {
+            true => match cond_read {
+                true => match pgx {
+                    true => cpu.read(addr as usize),
+                    false => no_read_val
+                },
+                false => cpu.read(addr as usize)
+            },
+            false => no_read_val
+        }
+    }
+
     // For easy handling of different address modes
     // This does not seem Rusty at all so need to find better way to avoid casting and wraps everywhere
-    fn get_mem(cpu: &mut Cpu6502, mode: &AddrMode, operands: &[u8]) -> (usize, u8, bool) {
+    fn get_mem(cpu: &mut Cpu6502, mode: &AddrMode, operands: &[u8], read: bool, cond_read: bool) -> (usize, u8, bool) {
         match mode {
             AddrMode::ABS0 => {
                 let addr = (operands[1] as usize) << 8 | operands[0] as usize;
-                (addr, cpu.ram[addr], false)
+                let value = check_read(cpu, addr, 0, true, read, cond_read);
+
+                (addr, value, false)
             },
             AddrMode::ABSX => {
                 // Have to read unfixed address first
-                cpu.read((operands[1] as usize) << 8 | operands[0].wrapping_add(cpu.registers.x) as usize);
+                let value = cpu.read((operands[1] as usize) << 8 | operands[0].wrapping_add(cpu.registers.x) as usize);
 
                 let addr = (operands[1] as u16) << 8 | operands[0] as u16;
                 let eff_addr = addr.wrapping_add(cpu.registers.x as u16);
-                (eff_addr as usize, cpu.ram[eff_addr as usize], (eff_addr & 0xFF00) != (addr & 0xFF00))
+                let pgx = (eff_addr & 0xFF00) != (addr & 0xFF00);
+
+                let ret_val = check_read(cpu, eff_addr as usize, value, pgx, read, cond_read);
+
+                (eff_addr as usize, ret_val, pgx)
             },
             AddrMode::ABSY => {
                 // Have to read unfixed address first
-                cpu.read((operands[1] as usize) << 8 | operands[0].wrapping_add(cpu.registers.y) as usize);
+                let value = cpu.read((operands[1] as usize) << 8 | operands[0].wrapping_add(cpu.registers.y) as usize);
 
                 let addr = (operands[1] as u16) << 8 | operands[0] as u16;
                 let eff_addr = addr.wrapping_add(cpu.registers.y as u16);
-                (eff_addr as usize, cpu.ram[eff_addr as usize], (eff_addr & 0xFF00) != (addr & 0xFF00))
+                let pgx = (eff_addr & 0xFF00) != (addr & 0xFF00);
+
+                let ret_val = check_read(cpu, eff_addr as usize, value, pgx, read, cond_read);
+
+                (eff_addr as usize, ret_val, pgx)
             },
             AddrMode::IND0 => {
                 let lsb_addr = (operands[1] as usize) << 8 | operands[0] as usize;
                 let lsb = cpu.read(lsb_addr) as usize;
+
                 // Have to add to lsb only of msb_addr due to CPU bug
                 let msb_addr = (operands[1] as usize) << 8 | operands[0].wrapping_add(1) as usize;
                 let msb = cpu.read(msb_addr) as usize;
                 let eff_addr = msb << 8 | lsb;
-                (eff_addr, cpu.ram[eff_addr], false)
+
+                let value = check_read(cpu, eff_addr, 0, true, read, cond_read);
+
+                (eff_addr, value, false)
             },
             AddrMode::INDX => {
                 // Dummy read
@@ -491,7 +516,10 @@ pub mod instructions {
                 let lsb = cpu.read(addr as usize) as usize;
                 let msb = cpu.read(addr.wrapping_add(1) as usize) as usize;
                 let eff_addr = msb << 8 | lsb;
-                (eff_addr, cpu.ram[eff_addr], false)
+
+                let value = check_read(cpu, eff_addr, 0, true, read, cond_read);
+
+                (eff_addr, value, false)
             },
             AddrMode::INDY => {
                 let zpaddr = operands[0];
@@ -500,29 +528,40 @@ pub mod instructions {
                 let addr = msb << 8 | lsb;
 
                 // Dummy read of unfixed address
-                cpu.read((msb as usize) << 8 | cpu.registers.y.wrapping_add(lsb as u8) as usize);
+                let value = cpu.read((msb as usize) << 8 | cpu.registers.y.wrapping_add(lsb as u8) as usize);
 
                 let eff_addr = addr.wrapping_add(cpu.registers.y as u16);
-                (eff_addr as usize, cpu.ram[eff_addr as usize], (eff_addr & 0xFF00) != (addr & 0xFF00))
+                let pgx = (eff_addr & 0xFF00) != (addr & 0xFF00);
+
+                let ret_val = check_read(cpu, eff_addr as usize, value, pgx, read, cond_read);
+
+                (eff_addr as usize, ret_val, pgx)
             },
             AddrMode::REL0 => {
                 let addr = cpu.registers.pc as i32;
                 let offset = (operands[0] as i8) as i32;
                 let eff_addr = ((addr + offset) as u16) as usize;
-                (eff_addr, cpu.ram[eff_addr], (eff_addr & 0xFF00) != (addr as usize & 0xFF00))
+                let pgx = (eff_addr & 0xFF00) != (addr as usize & 0xFF00);
+
+                let value = check_read(cpu, eff_addr, 0, pgx, read, cond_read);
+
+                (eff_addr, value, pgx)
             },
             AddrMode::ZPG0 => {
-                (operands[0] as usize, cpu.ram[operands[0] as usize], false)
+                let value = check_read(cpu, operands[0] as usize, 0, true, read, cond_read);
+                (operands[0] as usize, value, false)
             },
             AddrMode::ZPGX => {
                 cpu.read(operands[0] as usize); // Read and discard
                 let eff_addr = (operands[0].wrapping_add(cpu.registers.x)) as usize;
-                (eff_addr, cpu.ram[eff_addr], false)
+                let value = check_read(cpu, eff_addr, 0, true, read, cond_read);
+                (eff_addr, value, false)
             },
             AddrMode::ZPGY => {
                 cpu.read(operands[0] as usize); // Read and discard
                 let eff_addr = (operands[0].wrapping_add(cpu.registers.y)) as usize;
-                (eff_addr, cpu.ram[eff_addr], false)
+                let value = check_read(cpu, eff_addr, 0, true, read, cond_read);
+                (eff_addr, value, false)
             },
             AddrMode::ACM0 => (0, cpu.registers.a, false),
             AddrMode::IMM0 => (0, operands[0], false),
@@ -561,37 +600,37 @@ pub mod instructions {
 
     // Load/Store Operations
     pub (super) fn lda(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
-        cpu.registers.a = cpu.cond_read(addr, value, pgx, &opcode.mode);
+        cpu.registers.a = value;
 
         update_zn_flags(cpu, value);
     }
     pub (super) fn ldx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
-        cpu.registers.x = cpu.cond_read(addr, value, pgx, &opcode.mode);
+        cpu.registers.x = value;
 
         update_zn_flags(cpu, value);
     }
     pub (super) fn ldy(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
-        cpu.registers.y = cpu.cond_read(addr, value, pgx, &opcode.mode);
+        cpu.registers.y = value;
 
         update_zn_flags(cpu, value);
     }
 
     pub (super) fn sta(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands, false, false);
         cpu.write(addr, cpu.registers.a);
     }
     pub (super) fn stx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands, false, false);
         cpu.write(addr, cpu.registers.x);
     }
     pub (super) fn sty(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands, false, false);
         cpu.write(addr, cpu.registers.y);
     }
 
@@ -644,29 +683,29 @@ pub mod instructions {
 
     // Logical Operations
     pub (super) fn and(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
-        cpu.registers.a &= cpu.cond_read(addr, value, pgx, &opcode.mode);
+        cpu.registers.a &= value;
 
         update_zn_flags(cpu, cpu.registers.a);
     }
     pub (super) fn eor(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
-        cpu.registers.a ^= cpu.cond_read(addr, value, pgx, &opcode.mode);
+        cpu.registers.a ^= value;
 
         update_zn_flags(cpu, cpu.registers.a);
     }
     pub (super) fn ora(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
-        cpu.registers.a |= cpu.cond_read(addr, value, pgx, &opcode.mode);
+        cpu.registers.a |= value;
 
         update_zn_flags(cpu, cpu.registers.a);
     }
     pub (super) fn bit(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, value, _) = get_mem(cpu, &opcode.mode, operands);
-        let result = cpu.registers.a & cpu.read(addr);
+        let (addr, value, _) = get_mem(cpu, &opcode.mode, operands, true, false);
+        let result = cpu.registers.a & value;
         update_zn_flags(cpu, result);
         
         // Copy the V and N bits from memory into status reg
@@ -677,15 +716,13 @@ pub mod instructions {
 
     // Arithmetic Operations
     fn compare(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) {
-        let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
         let reg = match reg {
             'a' => cpu.registers.a,
             'x' => cpu.registers.x,
             'y' => cpu.registers.y,
             _ => 0 // Shouldn't get here
         };
-
-        value = cpu.cond_read(addr, value, pgx, &opcode.mode);
 
         let result = reg.wrapping_sub(value);
 
@@ -696,9 +733,7 @@ pub mod instructions {
         }
     }
     pub (super) fn adc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
-
-        value = cpu.cond_read(addr, value, pgx, &opcode.mode);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
         let carry = match cpu.registers.p.contains(StatusFlags::C) {
             true => 1,
@@ -759,10 +794,8 @@ pub mod instructions {
         cpu.registers.a = sum as u8;
     }
     pub (super) fn sbc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, _) = get_mem(cpu, &opcode.mode, operands, true, true);
 
-        value = cpu.cond_read(addr, value, pgx, &opcode.mode);
-        
         // We subtract the inverted carry bit
         let carry = match cpu.registers.p.contains(StatusFlags::C) {
             true => 0,
@@ -829,8 +862,7 @@ pub mod instructions {
 
     // Inc/Dec Operations
     pub (super) fn inc(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
-        let mut value = cpu.read(addr);
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands, true, false);
         cpu.write(addr, value); // Dummy write
         value = value.wrapping_add(1);
         update_zn_flags(cpu, value);
@@ -845,8 +877,7 @@ pub mod instructions {
         update_zn_flags(cpu, cpu.registers.y);
     }
     pub (super) fn dec(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
-        let mut value = cpu.read(addr);
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands, true, false);
         cpu.write(addr, value);
         value = value.wrapping_sub(1);
         update_zn_flags(cpu, value);
@@ -863,11 +894,11 @@ pub mod instructions {
 
     // Shift Operations
     pub (super) fn asl(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, mut value, pgx) = get_mem(cpu, &opcode.mode, operands, true, false);
 
-        value = match opcode.mode {
-            AddrMode::ACM0 => value,
-            _ => { value = cpu.read(addr); cpu.write(addr, value); value }
+        match opcode.mode {
+            AddrMode::ACM0 => {},
+            _ => cpu.write(addr, value)
         };
 
         let old_bit7 = value & (1 << 7) != 0;
@@ -885,11 +916,11 @@ pub mod instructions {
         }
     }
     pub (super) fn lsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands, true, false);
 
-        value = match opcode.mode {
-            AddrMode::ACM0 => value,
-            _ => { value = cpu.read(addr); cpu.write(addr, value); value }
+        match opcode.mode {
+            AddrMode::ACM0 => {},
+            _ => cpu.write(addr, value)
         };
 
         let old_bit0 = value & 1 != 0;
@@ -907,11 +938,11 @@ pub mod instructions {
         }
     }
     pub (super) fn rol(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands, true, false);
 
-        value = match opcode.mode {
-            AddrMode::ACM0 => value,
-            _ => { value = cpu.read(addr); cpu.write(addr, value); value }
+        match opcode.mode {
+            AddrMode::ACM0 => {},
+            _ => cpu.write(addr, value)
         };
 
         let old_bit7 = value & (1 << 7) != 0;
@@ -933,11 +964,11 @@ pub mod instructions {
         update_zn_flags(cpu, value);
     }
     pub (super) fn ror(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, mut value, _) = get_mem(cpu, &opcode.mode, operands, true, false);
 
-        value = match opcode.mode {
-            AddrMode::ACM0 => value,
-            _ => { value = cpu.read(addr); cpu.write(addr, value); value }
+        match opcode.mode {
+            AddrMode::ACM0 => {},
+            _ => cpu.write(addr, value)
         };
 
         let old_bit0 = value & 1 != 0;
@@ -961,14 +992,13 @@ pub mod instructions {
 
     // Jump/Call Operations
     pub (super) fn jmp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, _, _) = get_mem(cpu, &opcode.mode, operands, false, false);
         cpu.registers.pc = addr as u16;
     }
     pub (super) fn jsr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         /* Because jsr can overwrite its operands during operation, we have to emulate individual
         cycles. That's the reason for this hackish way of doing things. */
-        cpu.cycles.pop();
-        cpu.cycles.pop();
+        //cpu.cycles -= 2;
 
         // Reset the PC to just after opcode fetch (which was originally incremented during tick())
         cpu.registers.pc -= (opcode.bytes - 1) as u16;
@@ -997,7 +1027,7 @@ pub mod instructions {
 
     // Branch Operations
     fn branch(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], flag: StatusFlags, set: bool) {
-        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands, false, false);
 
         // Rust cmon why... I just want to pass in a damn bit flag and you make me do this??
         let branch_set = set && (cpu.registers.p.bits() & flag.bits()) != 0;
@@ -1162,8 +1192,9 @@ pub mod instructions {
         adc(cpu, opcode, operands);
     }
     pub (super) fn sax(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
-        cpu.ram[addr] = cpu.registers.a & cpu.registers.x;
+        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands, false, false);
+        //cpu.ram[addr] = cpu.registers.a & cpu.registers.x;
+        cpu.write(addr, cpu.registers.a & cpu.registers.x);
     }
     pub (super) fn ane(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         /* This is a highly unstable operation with non-deterministic behavior in reality.
@@ -1176,7 +1207,7 @@ pub mod instructions {
         and(cpu, opcode, operands);
     }
     fn shr(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8], reg: char) {
-        let (mut addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (mut addr, _, pgx) = get_mem(cpu, &opcode.mode, operands, false, false);
 
         let mut result = match reg {
             'a' => cpu.registers.a & cpu.registers.x,
@@ -1196,7 +1227,7 @@ pub mod instructions {
             result &= adh;
         }
 
-        cpu.ram[addr] = result;
+        cpu.write(addr, result);
     }
     pub (super) fn sha(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         shr(cpu, opcode, operands, 'a');
@@ -1216,7 +1247,7 @@ pub mod instructions {
         ldx(cpu, opcode, operands);
     }
     pub (super) fn las(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (_, value, pgx) = get_mem(cpu, &opcode.mode, operands, true, false);
         let result = value & cpu.registers.s;
         update_zn_flags(cpu, result);
         cpu.registers.a = result;
@@ -1235,14 +1266,15 @@ pub mod instructions {
         cpu.registers.x = cpu.registers.a;
     }
     pub (super) fn dcp(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
-        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands);
+        let (addr, _, pgx) = get_mem(cpu, &opcode.mode, operands, false, false);
         dec(cpu, opcode, operands);
 
         /* In some indirect addressing modes, it's possible for dec to decrement
         the operand which is also used as address. So we can no longer use the operands
-        for addressing. Thus we cache the address before calling dec and call cmp
+        for addressing. Thus we reread from memory before calling dec and call cmp
         immediate directly with the value in RAM at that address. */
-        cmp(cpu, &OPCODES[0xC9], &[cpu.ram[addr]]);
+        let value = cpu.read(addr); // This won't be cycle accurate, might need mem_peak function
+        cmp(cpu, &OPCODES[0xC9], &[value]);
     }
     pub (super) fn sbx(cpu: &mut Cpu6502, opcode: &Opcode, operands: &[u8]) {
         let reg = cpu.registers.a & cpu.registers.x;
