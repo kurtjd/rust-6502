@@ -9,6 +9,22 @@ const STACK_OFFSET: usize = 0x0100;
 const RESET_VECTOR: usize = 0xFFFC;
 const INTR_VECTOR: usize = 0xFFFE;
 
+enum AddrMode {
+    ACM0,   // Accumulator
+    ABS0,   // Absolute
+    ABSX,   // Absolute Indexed with X
+    ABSY,   // Absolute Indexed with Y
+    IMM0,   // Immediate
+    IMP0,   // Implied
+    IND0,   // Indirect
+    INDX,   // Indirect Indexed with X
+    INDY,   // Indirect Indexed with Y
+    REL0,   // Relative
+    ZPG0,   // Zero Page
+    ZPGX,   // Zero Page Indexed Indirect with X
+    ZPGY    // Zero Page Indexed Indirect with Y
+}
+
 struct Opcode {
     instr: fn(&mut Cpu6502, &Opcode, &[u8]),
     mode: AddrMode,
@@ -417,7 +433,6 @@ impl <'a>Cpu6502<'a> {
 
     fn read(&mut self, address: usize) -> u8 {
         self.cycles += 1;
-        //self.mem_read.borrow_mut()(address)
         (self.mem_read)(address)
     }
 
@@ -425,22 +440,6 @@ impl <'a>Cpu6502<'a> {
         self.cycles += 1;
         (self.mem_write)(address, value)
     }
-}
-
-enum AddrMode {
-    ACM0,   // Accumulator
-    ABS0,   // Absolute
-    ABSX,   // Absolute Indexed with X
-    ABSY,   // Absolute Indexed with Y
-    IMM0,   // Immediate
-    IMP0,   // Implied
-    IND0,   // Indirect
-    INDX,   // Indirect Indexed with X
-    INDY,   // Indirect Indexed with Y
-    REL0,   // Relative
-    ZPG0,   // Zero Page
-    ZPGX,   // Zero Page Indexed Indirect with X
-    ZPGY    // Zero Page Indexed Indirect with Y
 }
 
 pub mod instructions {

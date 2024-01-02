@@ -1,0 +1,474 @@
+#!/bin/bash
+case "$1" in
+    "adc")
+        ./test_opcode 69
+        ./test_opcode 65
+        ./test_opcode 75
+        ./test_opcode 6d
+        ./test_opcode 7d
+        ./test_opcode 79
+        ./test_opcode 61
+        ./test_opcode 71
+        ;;
+
+    "and")
+        ./test_opcode 29
+        ./test_opcode 25
+        ./test_opcode 35
+        ./test_opcode 2d
+        ./test_opcode 3d
+        ./test_opcode 39
+        ./test_opcode 21
+        ./test_opcode 31
+        ;;
+
+    "asl")
+        ./test_opcode 0a
+        ./test_opcode 06
+        ./test_opcode 16
+        ./test_opcode 0e
+        ./test_opcode 1e
+        ;;
+
+    "bcc")
+        ./test_opcode 90
+        ;;
+
+    "bcs")
+        ./test_opcode b0
+        ;;
+
+    "beq")
+        ./test_opcode f0
+        ;;
+
+    "bit")
+        ./test_opcode 24
+        ./test_opcode 2c
+        ;;
+
+    "bmi")
+        ./test_opcode 30
+        ;;
+
+    "bne")
+        ./test_opcode d0
+        ;;
+
+    "bpl")
+        ./test_opcode 10
+        ;;
+
+    "brk")
+        ./test_opcode 00
+        ;;
+
+    "bvc")
+        ./test_opcode 50
+        ;;
+
+    "bvs")
+        ./test_opcode 70
+        ;;
+
+    "clc")
+        ./test_opcode 18
+        ;;
+
+    "cld")
+        ./test_opcode d8
+        ;;
+
+    "cli")
+        ./test_opcode 58
+        ;;
+
+    "clv")
+        ./test_opcode b8
+        ;;
+
+    "cmp")
+        ./test_opcode c9
+        ./test_opcode c5
+        ./test_opcode d5
+        ./test_opcode cd
+        ./test_opcode dd
+        ./test_opcode d9
+        ./test_opcode c1
+        ./test_opcode d1
+        ;;
+
+    "cpx")
+        ./test_opcode e0
+        ./test_opcode e4
+        ./test_opcode ec
+        ;;
+
+    "cpy")
+        ./test_opcode c0
+        ./test_opcode c4
+        ./test_opcode cc
+        ;;
+
+    "dec")
+        ./test_opcode c6
+        ./test_opcode d6
+        ./test_opcode ce
+        ./test_opcode de
+        ;;
+
+    "dex")
+        ./test_opcode ca
+        ;;
+
+    "dey")
+        ./test_opcode 88
+        ;;
+
+    "eor")
+        ./test_opcode 49
+        ./test_opcode 45
+        ./test_opcode 55
+        ./test_opcode 4d
+        ./test_opcode 5d
+        ./test_opcode 59
+        ./test_opcode 41
+        ./test_opcode 51
+        ;;
+
+    "inc")
+        ./test_opcode e6
+        ./test_opcode f6
+        ./test_opcode ee
+        ./test_opcode fe
+        ;;
+
+    "inx")
+        ./test_opcode e8
+        ;;
+
+    "iny")
+        ./test_opcode c8
+        ;;
+
+    "jmp")
+        ./test_opcode 4c
+        ./test_opcode 6c
+        ;;
+
+    "jsr")
+        ./test_opcode 20
+        ;;
+
+    "lda")
+        ./test_opcode a9
+        ./test_opcode a5
+        ./test_opcode b5
+        ./test_opcode ad
+        ./test_opcode bd
+        ./test_opcode b9
+        ./test_opcode a1
+        ./test_opcode b1
+        ;;
+
+    "ldx")
+        ./test_opcode a2
+        ./test_opcode a6
+        ./test_opcode b6
+        ./test_opcode ae
+        ./test_opcode be
+        ;;
+
+    "ldy")
+        ./test_opcode a0
+        ./test_opcode a4
+        ./test_opcode b4
+        ./test_opcode ac
+        ./test_opcode bc
+        ;;
+
+    "lsr")
+        ./test_opcode 4a
+        ./test_opcode 46
+        ./test_opcode 56
+        ./test_opcode 4e
+        ./test_opcode 5e
+        ;;
+
+    "nop")
+        ./test_opcode ea
+        # Illegal NOPs
+        ./test_opcode 1a
+        ./test_opcode 3a
+        ./test_opcode 5a
+        ./test_opcode 7a
+        ./test_opcode da
+        ./test_opcode fa
+        ./test_opcode 80
+        ./test_opcode 82
+        ./test_opcode 89
+        ./test_opcode c2
+        ./test_opcode e2
+        ./test_opcode 04
+        ./test_opcode 44
+        ./test_opcode 64
+        ./test_opcode 14
+        ./test_opcode 34
+        ./test_opcode 54
+        ./test_opcode 74
+        ./test_opcode d4
+        ./test_opcode f4
+        ./test_opcode 0c
+        ./test_opcode 1c
+        ./test_opcode 3c
+        ./test_opcode 5c
+        ./test_opcode 7c
+        ./test_opcode dc
+        ./test_opcode fc
+        ;;
+
+    "ora")
+        ./test_opcode 09
+        ./test_opcode 05
+        ./test_opcode 15
+        ./test_opcode 0d
+        ./test_opcode 1d
+        ./test_opcode 19
+        ./test_opcode 01
+        ./test_opcode 11
+        ;;
+
+    "pha")
+        ./test_opcode 48
+        ;;
+
+    "php")
+        ./test_opcode 08
+        ;;
+
+    "pla")
+        ./test_opcode 68
+        ;;
+
+    "plp")
+        ./test_opcode 28
+        ;;
+
+    "rol")
+        ./test_opcode 2a
+        ./test_opcode 26
+        ./test_opcode 36
+        ./test_opcode 2e
+        ./test_opcode 3e
+        ;;
+
+    "ror")
+        ./test_opcode 6a
+        ./test_opcode 66
+        ./test_opcode 76
+        ./test_opcode 6e
+        ./test_opcode 7e
+        ;;
+
+    "rti")
+        ./test_opcode 40
+        ;;
+
+    "rts")
+        ./test_opcode 60
+        ;;
+
+    "sbc")
+        ./test_opcode e9
+        ./test_opcode e5
+        ./test_opcode f5
+        ./test_opcode ed
+        ./test_opcode fd
+        ./test_opcode f9
+        ./test_opcode e1
+        ./test_opcode f1
+        ;;
+
+    "sec")
+        ./test_opcode 38
+        ;;
+
+    "sed")
+        ./test_opcode f8
+        ;;
+
+    "sei")
+        ./test_opcode 78
+        ;;
+
+    "sta")
+        ./test_opcode 85
+        ./test_opcode 95
+        ./test_opcode 8d
+        ./test_opcode 9d
+        ./test_opcode 99
+        ./test_opcode 81
+        ./test_opcode 91
+        ;;
+
+    "stx")
+        ./test_opcode 86
+        ./test_opcode 96
+        ./test_opcode 8e
+        ;;
+
+    "sty")
+        ./test_opcode 84
+        ./test_opcode 94
+        ./test_opcode 8c
+        ;;
+
+    "tax")
+        ./test_opcode aa
+        ;;
+
+    "tay")
+        ./test_opcode a8
+        ;;
+
+    "tsx")
+        ./test_opcode ba
+        ;;
+
+    "txa")
+        ./test_opcode 8a
+        ;;
+
+    "txs")
+        ./test_opcode 9a
+        ;;
+
+    "tya")
+        ./test_opcode 98
+        ;;
+
+    # Illegal opcodes
+    "alr")
+        ./test_opcode 4b
+        ;;
+    "anc")
+        ./test_opcode 0b
+        ./test_opcode 2b
+        ;;
+    "ane")
+        ./test_opcode 8b
+        ;;
+    "arr")
+        ./test_opcode 6b
+        ;;
+    "dcp")
+        ./test_opcode c7
+        ./test_opcode d7
+        ./test_opcode cf
+        ./test_opcode df
+        ./test_opcode db
+        ./test_opcode c3
+        ./test_opcode d3
+        ;;
+    "isc")
+        ./test_opcode e7
+        ./test_opcode f7
+        ./test_opcode ef
+        ./test_opcode ff
+        ./test_opcode fb
+        ./test_opcode e3
+        ./test_opcode f3
+        ;;
+    "las")
+        ./test_opcode bb
+        ;;
+    "lax")
+        ./test_opcode a7
+        ./test_opcode b7
+        ./test_opcode af
+        ./test_opcode bf
+        ./test_opcode a3
+        ./test_opcode b3
+        ;;
+    "lxa")
+        ./test_opcode ab
+        ;;
+    "rla")
+        ./test_opcode 27
+        ./test_opcode 37
+        ./test_opcode 2f
+        ./test_opcode 3f
+        ./test_opcode 3b
+        ./test_opcode 23
+        ./test_opcode 33
+        ;;
+    "rra")
+        ./test_opcode 67
+        ./test_opcode 77
+        ./test_opcode 6f
+        ./test_opcode 7f
+        ./test_opcode 7b
+        ./test_opcode 63
+        ./test_opcode 73
+        ;;
+    "sax")
+        ./test_opcode 87
+        ./test_opcode 97
+        ./test_opcode 8f
+        ./test_opcode 83
+        ;;
+    "sbx")
+        ./test_opcode cb
+        ;;
+    "sha")
+        ./test_opcode 9f
+        ./test_opcode 93
+        ;;
+    "shx")
+        ./test_opcode 9e
+        ;;
+    "shy")
+        ./test_opcode 9c
+        ;;
+    "slo")
+        ./test_opcode 07
+        ./test_opcode 17
+        ./test_opcode 0f
+        ./test_opcode 1f
+        ./test_opcode 1b
+        ./test_opcode 03
+        ./test_opcode 13
+        ;;
+    "sre")
+        ./test_opcode 47
+        ./test_opcode 57
+        ./test_opcode 4f
+        ./test_opcode 5f
+        ./test_opcode 5b
+        ./test_opcode 43
+        ./test_opcode 53
+        ;;
+    "tas")
+        ./test_opcode 9b
+        ;;
+    "usb")
+        ./test_opcode eb
+        ;;
+    "jam")
+        ./test_opcode 02
+        ./test_opcode 12
+        ./test_opcode 22
+        ./test_opcode 32
+        ./test_opcode 42
+        ./test_opcode 52
+        ./test_opcode 62
+        ./test_opcode 72
+        ./test_opcode 92
+        ./test_opcode b2
+        ./test_opcode d2
+        ./test_opcode f2
+        ;;
+    *)
+        echo "Invalid instruction"
+        ;;
+esac
