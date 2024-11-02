@@ -9,6 +9,7 @@ const STACK_OFFSET: usize = 0x0100;
 const RESET_VECTOR: usize = 0xFFFC;
 const INTR_VECTOR: usize = 0xFFFE;
 
+#[allow(clippy::upper_case_acronyms)]
 enum AddrMode {
     ACM0, // Accumulator
     ABS0, // Absolute
@@ -1470,10 +1471,10 @@ pub mod instructions {
         match to_read {
             true => match cond_read {
                 true => match pgx {
-                    true => cpu.read(addr as usize),
+                    true => cpu.read(addr),
                     false => no_read_val,
                 },
-                false => cpu.read(addr as usize),
+                false => cpu.read(addr),
             },
             false => no_read_val,
         }
@@ -1542,7 +1543,7 @@ pub mod instructions {
                 // Dummy read
                 cpu.read(operands[0] as usize);
 
-                let addr = (operands[0].wrapping_add(cpu.registers.x)) as u8;
+                let addr = operands[0].wrapping_add(cpu.registers.x);
                 let lsb = cpu.read(addr as usize) as usize;
                 let msb = cpu.read(addr.wrapping_add(1) as usize) as usize;
                 let eff_addr = msb << 8 | lsb;
@@ -2206,12 +2207,10 @@ pub mod instructions {
             }
 
             cpu.registers.a = result;
+        } else if ror_res & (1 << 6) != 0 {
+            cpu.registers.p |= StatusFlags::C;
         } else {
-            if ror_res & (1 << 6) != 0 {
-                cpu.registers.p |= StatusFlags::C;
-            } else {
-                cpu.registers.p &= !StatusFlags::C;
-            }
+            cpu.registers.p &= !StatusFlags::C;
         }
 
         // Overflow is set based on XOR of bits 6 and 5 of result
